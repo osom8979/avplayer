@@ -20,5 +20,4 @@ cd "$ROOT_DIR" && pyinstaller \
     --onefile \
     --clean \
     --noconsole \
-    --add-data "avplayer/www:www" \
     "$ROOT_DIR/main.py"

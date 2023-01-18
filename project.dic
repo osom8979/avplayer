@@ -2,6 +2,22 @@
 # https://plugins.jetbrains.com/plugin/12089-dictionary
 
 asctime
+autodect
+byterange
 datefmt
+endlist
+extinf
+extm
+fmpeg
+hdcp
+jsep
+keyformat
+keyformatversions
 levelname
+mediaplayer
+muxing
 nocov
+packetization
+strftime
+swscaler
+targetduration
