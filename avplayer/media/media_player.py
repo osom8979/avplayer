@@ -47,13 +47,6 @@ class MediaPlayer:
         callbacks: Optional[MediaCallbacks] = None,
         options: Optional[MediaOptions] = None,
     ):
-        if destination and isinstance(destination, HlsOutputOptions):
-            cache_dir = destination.cache_dir
-            if not os.path.isdir(cache_dir):
-                raise NotADirectoryError(f"Not found cache directory: '{cache_dir}'")
-            if not os.access(cache_dir, os.W_OK):
-                raise PermissionError(f"Write permission is required: '{cache_dir}'")
-
         self._address = address
         self._destination = destination
         self._callbacks = callbacks
@@ -98,7 +91,7 @@ class MediaPlayer:
     @property
     def class_name(self) -> str:
         buffer = StringIO()
-        buffer.write(f"MediaPlayer[name='{self.name}'")
+        buffer.write(f"{type(self).__name__}[name='{self.name}'")
         device_uid = self.device_uid
         if device_uid != UNKNOWN_DEVICE_UID:
             buffer.write(f",device={self.device_uid}")
@@ -231,6 +224,14 @@ class MediaPlayer:
         return output_container
 
     def _create_media(self) -> None:
+        destination = self._destination
+        if destination and isinstance(destination, HlsOutputOptions):
+            cache_dir = destination.cache_dir
+            if not os.path.isdir(cache_dir):
+                raise NotADirectoryError(f"Not found cache directory: '{cache_dir}'")
+            if not os.access(cache_dir, os.W_OK):
+                raise PermissionError(f"Write permission is required: '{cache_dir}'")
+
         video_index = self._options.video_index
         audio_index = self._options.audio_index
         go_faster = self._options.go_faster

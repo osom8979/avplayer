@@ -24,7 +24,11 @@ from avplayer.chrono.datetime_filename import parse_dirname_and_filename
 from avplayer.collections.frame_collection import FrameCollection
 from avplayer.logging.logging import logger
 from avplayer.media.hls_output_options import HlsOutputOptions
-from avplayer.media.media_callbacks import MediaCallbacks
+from avplayer.media.media_callbacks import (
+    AsyncMediaCallbacksInterface,
+    MediaCallbacks,
+    MediaCallbacksInterface,
+)
 
 PACKET_TYPE_VIDEO: Final[str] = "video"
 PACKET_TYPE_AUDIO: Final[str] = "audio"
@@ -108,8 +112,10 @@ class MediaWorker:
         if iscoroutinefunction(self._callbacks.on_container_begin):
             if not self._loop:
                 return
+            assert isinstance(self._callbacks, AsyncMediaCallbacksInterface)
             run_coroutine_threadsafe(self._callbacks.on_container_begin(), self._loop)
         else:
+            assert isinstance(self._callbacks, MediaCallbacksInterface)
             self._callbacks.on_container_begin()
 
     def call_on_container_end(self) -> None:
@@ -119,8 +125,10 @@ class MediaWorker:
         if iscoroutinefunction(self._callbacks.on_container_end):
             if not self._loop:
                 return
+            assert isinstance(self._callbacks, AsyncMediaCallbacksInterface)
             run_coroutine_threadsafe(self._callbacks.on_container_end(), self._loop)
         else:
+            assert isinstance(self._callbacks, MediaCallbacksInterface)
             self._callbacks.on_container_end()
 
     def call_on_video_frame(
@@ -132,11 +140,13 @@ class MediaWorker:
         if iscoroutinefunction(self._callbacks.on_video_frame):
             if not self._loop:
                 return
+            assert isinstance(self._callbacks, AsyncMediaCallbacksInterface)
             run_coroutine_threadsafe(
                 self._callbacks.on_video_frame(frame, start, last),
                 self._loop,
             )
         else:
+            assert isinstance(self._callbacks, MediaCallbacksInterface)
             self._callbacks.on_video_frame(frame, start, last)
 
     def call_on_audio_frame(
@@ -148,11 +158,13 @@ class MediaWorker:
         if iscoroutinefunction(self._callbacks.on_audio_frame):
             if not self._loop:
                 return
+            assert isinstance(self._callbacks, AsyncMediaCallbacksInterface)
             run_coroutine_threadsafe(
                 self._callbacks.on_audio_frame(frame, start, last),
                 self._loop,
             )
         else:
+            assert isinstance(self._callbacks, MediaCallbacksInterface)
             self._callbacks.on_audio_frame(frame, start, last)
 
     def call_on_segment(
@@ -164,11 +176,13 @@ class MediaWorker:
         if iscoroutinefunction(self._callbacks.on_segment):
             if not self._loop:
                 return
+            assert isinstance(self._callbacks, AsyncMediaCallbacksInterface)
             run_coroutine_threadsafe(
                 self._callbacks.on_segment(directory, filename, start, last),
                 self._loop,
             )
         else:
+            assert isinstance(self._callbacks, MediaCallbacksInterface)
             self._callbacks.on_segment(directory, filename, start, last)
 
     def put_video_frame(self, frame: Frame) -> ndarray:

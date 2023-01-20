@@ -8,7 +8,13 @@ from avplayer.logging.logging import SEVERITIES, SEVERITY_NAME_INFO
 
 PROG: Final[str] = "avplayer"
 DESCRIPTION: Final[str] = "PyAV Media Player"
-EPILOG: Final[str] = ""
+EPILOG = f"""
+Examples:
+
+    Play RTSP streaming sources:
+        {PROG} -c -d rtsp://0.0.0.0:8554/live.sdp
+"""
+
 
 DEFAULT_SEVERITY: Final[str] = SEVERITY_NAME_INFO
 
