@@ -3,8 +3,8 @@
 from argparse import Namespace
 from asyncio import get_running_loop
 from asyncio import run as asyncio_run
-from asyncio import sleep as asyncio_sleep
 from asyncio import run_coroutine_threadsafe
+from asyncio import sleep as asyncio_sleep
 from datetime import datetime
 from tkinter import NW, Canvas, Tk
 from typing import Final, Optional
