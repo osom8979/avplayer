@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from avplayer.variables import (
@@ -12,18 +12,14 @@ from avplayer.variables import (
 
 
 @dataclass
-class MediaOptions:
+class CommonMediaOptions:
     format: Optional[str] = None
     """Specific format to use.
     Defaults to 'autodect'.
     """
 
-    input_options: Optional[Dict[str, Any]] = None
-    """Options to pass to the input container and all streams.
-    """
-
-    output_options: Optional[Dict[str, Any]] = None
-    """Options to pass to the output container and all streams.
+    options: Optional[Dict[str, Any]] = None
+    """Options to pass to the container and all streams.
     """
 
     container_options: Optional[Dict[str, Any]] = None
@@ -55,37 +51,6 @@ class MediaOptions:
     or a (open timeout, read timeout) tuple.
     """
 
-    video_index: Optional[int] = 0
-    """The video index of the InputContainer.
-    """
-
-    audio_index: Optional[int] = None
-    """The audio index of the InputContainer.
-    """
-
-    max_frame_queue: Optional[int] = None
-    """Maximum AV frame queue size.
-    """
-
-    go_faster: bool = True
-    low_delay: bool = True
-
-    device: Optional[int] = None
-    """Device UID number.
-    """
-
-    group: Optional[str] = None
-    """The group's slug name.
-    """
-
-    project: Optional[str] = None
-    """The project's slug name.
-    """
-
-    name: Optional[str] = None
-    """A unique, human-readable name.
-    """
-
     def get_metadata_encoding(self) -> str:
         if self.metadata_encoding:
             return self.metadata_encoding
@@ -110,6 +75,9 @@ class MediaOptions:
         else:
             return DEFAULT_AV_TIMEOUT
 
+    def get_format_name(self) -> str:
+        return f"format={self.format}" if self.format else "format=autodect"
+
     def get_timeout_argument_message(self) -> str:
         timeout = self.get_timeout()
         if isinstance(timeout, tuple):
@@ -117,6 +85,59 @@ class MediaOptions:
             return f"timeout.open={timeout[0]}s,timeout.read={timeout[1]}s"
         else:
             return f"timeout={timeout}s"
+
+
+@dataclass
+class InputMediaOptions(CommonMediaOptions):
+    video_index: Optional[int] = 0
+    """The video index of the InputContainer.
+    """
+
+    audio_index: Optional[int] = None
+    """The audio index of the InputContainer.
+    """
+
+
+@dataclass
+class OutputMediaOptions(CommonMediaOptions):
+    enable_video: bool = True
+    """Use video input container
+    """
+
+    enable_audio: bool = True
+    """Use audio input container
+    """
+
+
+@dataclass
+class MediaOptions:
+    input: InputMediaOptions = field(default_factory=InputMediaOptions)
+    """Input file options.
+    """
+
+    output: OutputMediaOptions = field(default_factory=OutputMediaOptions)
+    """Output file options.
+    """
+
+    max_frame_queue: Optional[int] = None
+    """Maximum AV frame queue size.
+    """
+
+    name: Optional[str] = None
+    """A unique, human-readable name.
+    """
+
+    go_faster: bool = True
+    """Thread type is frame+slice.
+    """
+
+    low_delay: bool = True
+    """Flag is low delay. This flag is force low delay.
+    """
+
+    speedup_tricks: bool = False
+    """Flag2 is fast. This flag2 is allow non-spec compliant speedup tricks.
+    """
 
     def get_max_frame_queue(self) -> int:
         if self.max_frame_queue is not None:

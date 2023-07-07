@@ -2,7 +2,6 @@
 
 import os
 from asyncio import AbstractEventLoop
-from io import StringIO
 from threading import Event, Thread
 from typing import List, Optional, Union
 
@@ -18,7 +17,7 @@ from avplayer.media.media_callbacks import MediaCallbacks
 from avplayer.media.media_kind import MediaKind
 from avplayer.media.media_options import MediaOptions
 from avplayer.media.media_worker import media_worker_main
-from avplayer.variables import REALTIME_FORMATS, UNKNOWN_DEVICE_UID
+from avplayer.variables import REALTIME_FORMATS
 
 
 class MediaPlayer:
@@ -74,29 +73,14 @@ class MediaPlayer:
 
     @property
     def name(self) -> str:
-        return self._options.name if self._options.name else str()
-
-    @property
-    def device_uid(self) -> int:
-        return self._options.device if self._options.device else UNKNOWN_DEVICE_UID
-
-    @property
-    def group_name(self) -> str:
-        return self._options.group if self._options.group else str()
-
-    @property
-    def project_name(self) -> str:
-        return self._options.project if self._options.project else str()
+        return self._options.name if self._options and self._options.name else str()
 
     @property
     def class_name(self) -> str:
-        buffer = StringIO()
-        buffer.write(f"{type(self).__name__}[name='{self.name}'")
-        device_uid = self.device_uid
-        if device_uid != UNKNOWN_DEVICE_UID:
-            buffer.write(f",device={self.device_uid}")
-        buffer.write("]")
-        return buffer.getvalue()
+        if self.name:
+            return f"{type(self).__name__}[name='{self.name}']"
+        else:
+            return type(self).__name__
 
     @property
     def video_queue(self) -> Optional[FrameCollection]:
@@ -111,9 +95,6 @@ class MediaPlayer:
 
     def __str__(self) -> str:
         return self.class_name
-
-    def is_unknown_device_uid(self) -> bool:
-        return self.device_uid == UNKNOWN_DEVICE_UID
 
     def is_open(self) -> bool:
         return self._input_container is not None
@@ -143,25 +124,26 @@ class MediaPlayer:
         self._destroy_media()
 
     def _create_input_container(self) -> InputContainer:
-        av_address = self._address
-        av_format = self._options.format
-        av_input_options = self._options.input_options
-        av_container_options = self._options.container_options
-        av_stream_options = self._options.stream_options
-        av_metadata_encoding = self._options.get_metadata_encoding()
-        av_metadata_errors = self._options.get_metadata_errors()
-        av_buffer_size = self._options.get_buffer_size()
-        av_timeout = self._options.get_timeout()
-        av_timeout_message = self._options.get_timeout_argument_message()
+        av_file = self._address
+        av_format = self._options.input.format
+        av_options = self._options.input.options
+        av_container_options = self._options.input.container_options
+        av_stream_options = self._options.input.stream_options
+        av_metadata_encoding = self._options.input.get_metadata_encoding()
+        av_metadata_errors = self._options.input.get_metadata_errors()
+        av_buffer_size = self._options.input.get_buffer_size()
+        av_timeout = self._options.input.get_timeout()
 
-        _args_message = f"address='{av_address}',{av_timeout_message}"
-        logger.debug(f"Input container opening ... ({_args_message})")
+        _a1 = self._options.input.get_format_name()
+        _a2 = self._options.input.get_timeout_argument_message()
+        _args = f"file='{av_file}',{_a1},{_a2}"
+        logger.debug(f"Input container opening ... ({_args})")
 
         input_container = av_open(
-            file=av_address,
+            file=av_file,
             mode="r",
             format=av_format,
-            options=av_input_options,
+            options=av_options,
             container_options=av_container_options,
             stream_options=av_stream_options,
             metadata_encoding=av_metadata_encoding,
@@ -179,35 +161,47 @@ class MediaPlayer:
         video_stream: Optional[Stream] = None,
         audio_stream: Optional[Stream] = None,
     ) -> OutputContainer:
-        av_output_options = self._options.output_options
-        av_metadata_encoding = self._options.get_metadata_encoding()
-        av_metadata_errors = self._options.get_metadata_errors()
-        av_buffer_size = self._options.get_buffer_size()
-        av_timeout = self._options.get_timeout()
+        av_format = self._options.output.format
+        av_container_options = self._options.output.container_options
+        av_stream_options = self._options.output.stream_options
+        av_metadata_encoding = self._options.output.get_metadata_encoding()
+        av_metadata_errors = self._options.output.get_metadata_errors()
+        av_buffer_size = self._options.output.get_buffer_size()
+        av_timeout = self._options.output.get_timeout()
 
         assert self._destination is not None
         if isinstance(self._destination, str):
-            output_filename = self._destination
-            output_options = av_output_options
+            av_file = self._destination
+            if self._options.output.options is None:
+                av_options = dict()
+            else:
+                av_options = self._options.output.options
         elif isinstance(self._destination, HlsOutputOptions):
-            output_filename = self._destination.get_hls_filename()
-            output_options = self._destination.get_hls_options()
-            if av_output_options is not None:
-                assert isinstance(av_output_options, dict)
-                output_options.update(av_output_options)
+            av_file = self._destination.get_hls_filename()
+            av_options = self._destination.get_hls_options()
+            if self._options.output.options is not None:
+                assert isinstance(self._options.output.options, dict)
+                av_options.update(self._options.output.options)
         else:
             assert False, "Inaccessible section"
 
-        assert output_filename is not None
-        assert output_options is not None
-        assert isinstance(output_filename, str)
-        assert isinstance(output_options, dict)
+        assert av_file is not None
+        assert av_options is not None
+        assert isinstance(av_file, str)
+        assert isinstance(av_options, dict)
 
-        logger.debug(f"Output container opening ... ({output_filename})")
+        _a1 = self._options.output.get_format_name()
+        _a2 = self._options.output.get_timeout_argument_message()
+        _args = f"file='{av_file}',{_a1},{_a2}"
+        logger.debug(f"Output container opening ... ({_args})")
+
         output_container = av_open(
-            file=output_filename,
+            file=av_file,
             mode="w",
-            options=output_options,
+            format=av_format,
+            options=av_options,
+            container_options=av_container_options,
+            stream_options=av_stream_options,
             metadata_encoding=av_metadata_encoding,
             metadata_errors=av_metadata_errors,
             buffer_size=av_buffer_size,
@@ -224,58 +218,59 @@ class MediaPlayer:
         return output_container
 
     def _create_media(self) -> None:
-        destination = self._destination
-        if destination and isinstance(destination, HlsOutputOptions):
-            cache_dir = destination.cache_dir
+        if self._destination and isinstance(self._destination, HlsOutputOptions):
+            cache_dir = self._destination.cache_dir
             if not os.path.isdir(cache_dir):
                 raise NotADirectoryError(f"Not found cache directory: '{cache_dir}'")
             if not os.access(cache_dir, os.W_OK):
                 raise PermissionError(f"Write permission is required: '{cache_dir}'")
 
-        video_index = self._options.video_index
-        audio_index = self._options.audio_index
+        video_index = self._options.input.video_index
+        audio_index = self._options.input.audio_index
         go_faster = self._options.go_faster
         low_delay = self._options.low_delay
+        speedup_tricks = self._options.speedup_tricks
         max_frame_queue = self._options.get_max_frame_queue()
 
         input_container = self._create_input_container()
         output_container: Optional[OutputContainer] = None
 
         try:
-            video_stream = init_stream(
+            video_stream_and_queue = init_stream(
                 kind=MediaKind.Video,
                 index=video_index,
                 streams=input_container.streams.video,
                 max_queue=max_frame_queue,
                 go_faster=go_faster,
                 low_delay=low_delay,
+                speedup_tricks=speedup_tricks,
             )
-            audio_stream = init_stream(
+            audio_stream_and_queue = init_stream(
                 kind=MediaKind.Audio,
                 index=audio_index,
                 streams=input_container.streams.audio,
                 max_queue=max_frame_queue,
                 go_faster=go_faster,
                 low_delay=low_delay,
+                speedup_tricks=speedup_tricks,
             )
+
+            assert video_stream_and_queue is not None
+            assert audio_stream_and_queue is not None
+
+            video_stream = video_stream_and_queue.stream
+            audio_stream = audio_stream_and_queue.stream
+            streams = [s for s in (video_stream, audio_stream) if s is not None]
+
+            video_queue = video_stream_and_queue.queue
+            audio_queue = audio_stream_and_queue.queue
 
             if video_stream is not None or audio_stream is not None:
                 if self._destination is not None:
                     output_container = self._create_output_container(
-                        video_stream[0] if video_stream is not None else None,
-                        audio_stream[0] if audio_stream is not None else None,
+                        video_stream if self._options.output.enable_video else None,
+                        audio_stream if self._options.output.enable_audio else None,
                     )
-
-            streams: List[Stream] = list()
-            video_queue: Optional[FrameCollection] = None
-            audio_queue: Optional[FrameCollection] = None
-
-            if video_stream is not None:
-                streams.append(video_stream[0])
-                video_queue = video_stream[1]
-            if audio_stream is not None:
-                streams.append(audio_stream[0])
-                audio_queue = audio_stream[1]
 
             # Check whether we need to throttle playback
             container_format = set(input_container.format.name.split(","))

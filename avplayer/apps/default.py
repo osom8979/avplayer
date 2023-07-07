@@ -6,7 +6,7 @@ from asyncio import run as asyncio_run
 from asyncio import sleep as asyncio_sleep
 from datetime import datetime
 from tkinter import NW, Canvas, Tk
-from typing import Final
+from typing import Final, Optional
 
 from numpy import full, ndarray, uint8
 from overrides import overrides
@@ -15,6 +15,7 @@ from PIL.ImageTk import PhotoImage
 
 from avplayer.logging.logging import logger
 from avplayer.media.media_callbacks import AsyncMediaCallbacksInterface
+from avplayer.media.media_options import MediaOptions
 from avplayer.media.media_player import MediaPlayer
 
 DEFAULT_TITLE: Final[str] = "AVPlayer"
@@ -32,6 +33,8 @@ class DefaultApp(Tk, AsyncMediaCallbacksInterface):
     def __init__(
         self,
         source: str,
+        output: Optional[str] = None,
+        options: Optional[MediaOptions] = None,
         width=800,
         height=600,
         x=0,
@@ -45,7 +48,12 @@ class DefaultApp(Tk, AsyncMediaCallbacksInterface):
         self.geometry(f"{width}x{height}+{x}+{y}")
         self.resizable(False, False)
 
-        self._player = MediaPlayer(source, callbacks=self)
+        self._player = MediaPlayer(
+            source,
+            destination=output,
+            callbacks=self,
+            options=options,
+        )
 
         self._sleep = 1.0 / fps
         self._exit = False
@@ -110,11 +118,13 @@ def default_main(args: Namespace) -> None:
 
     debug = args.debug
     verbose = args.verbose
+    output = args.output
     source = args.source
 
     assert isinstance(debug, bool)
     assert isinstance(verbose, int)
+    assert isinstance(output, (type(None), str))
     assert isinstance(source, str)
 
-    app = DefaultApp(source)
+    app = DefaultApp(source, output)
     asyncio_run(app.run())

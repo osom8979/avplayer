@@ -6,7 +6,6 @@ from copy import deepcopy
 from datetime import datetime
 from enum import Enum, auto, unique
 from inspect import iscoroutinefunction
-from io import StringIO
 from typing import Optional, Union
 
 from numpy import ndarray
@@ -21,7 +20,6 @@ from avplayer.media.media_callbacks import (
 )
 from avplayer.media.media_options import MediaOptions
 from avplayer.media.media_player import MediaPlayer
-from avplayer.variables import UNKNOWN_DEVICE_UID
 
 
 class IllegalStateError(RuntimeError):
@@ -68,50 +66,20 @@ class AutoPlayer(AsyncMediaCallbacksInterface):
 
     @property
     def name(self) -> str:
-        if self._options and self._options.name:
-            return self._options.name
-        else:
-            return str()
-
-    @property
-    def device_uid(self) -> int:
-        if self._options and self._options.device:
-            return self._options.device
-        else:
-            return UNKNOWN_DEVICE_UID
-
-    @property
-    def group_name(self) -> str:
-        if self._options and self._options.group:
-            return self._options.group
-        else:
-            return str()
-
-    @property
-    def project_name(self) -> str:
-        if self._options and self._options.project:
-            return self._options.project
-        else:
-            return str()
+        return self._options.name if self._options and self._options.name else str()
 
     @property
     def class_name(self) -> str:
-        buffer = StringIO()
-        buffer.write(f"{type(self).__name__}[name='{self.name}'")
-        device_uid = self.device_uid
-        if device_uid != UNKNOWN_DEVICE_UID:
-            buffer.write(f",device={self.device_uid}")
-        buffer.write("]")
-        return buffer.getvalue()
+        if self.name:
+            return f"{type(self).__name__}[name='{self.name}']"
+        else:
+            return type(self).__name__
 
     def __repr__(self) -> str:
         return self.class_name
 
     def __str__(self) -> str:
         return self.class_name
-
-    def is_unknown_device_uid(self) -> bool:
-        return self.device_uid == UNKNOWN_DEVICE_UID
 
     def is_open(self) -> bool:
         return self._player is not None

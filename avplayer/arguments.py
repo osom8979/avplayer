@@ -74,6 +74,22 @@ def default_argument_parser() -> ArgumentParser:
         action="version",
         version=version(),
     )
+
+    parser.add_argument(
+        "--output",
+        "-o",
+        help="AV output address",
+    )
+    parser.add_argument(
+        "-io",
+        action="extend",
+        help="AV input options",
+    )
+    parser.add_argument(
+        "-oo",
+        action="extend",
+        help="AV output options",
+    )
     parser.add_argument(
         "source",
         help="AV source address",

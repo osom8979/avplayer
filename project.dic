@@ -3,11 +3,14 @@
 
 asctime
 autodect
+bitexact
 byterange
 datefmt
+dropchanged
 endlist
 extinf
 extm
+extradata
 fmpeg
 hdcp
 jsep
@@ -18,6 +21,10 @@ mediaplayer
 muxing
 nocov
 packetization
+psnr
+qpel
+qscale
+ratecontrol
 strftime
 swscaler
 targetduration

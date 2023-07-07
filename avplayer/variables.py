@@ -54,5 +54,3 @@ DEFAULT_AV_TIMEOUT: Final[Tuple[float, float]] = (
 
 HLS_MASTER_FILENAME: Final[str] = "master.m3u8"
 HLS_SEGMENT_FILENAME: Final[str] = "%Y-%m-%d_%H-%M-%S.ts"
-
-UNKNOWN_DEVICE_UID: Final[int] = -1
