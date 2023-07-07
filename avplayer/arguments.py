@@ -81,16 +81,6 @@ def default_argument_parser() -> ArgumentParser:
         help="AV output address",
     )
     parser.add_argument(
-        "-io",
-        action="extend",
-        help="AV input options",
-    )
-    parser.add_argument(
-        "-oo",
-        action="extend",
-        help="AV output options",
-    )
-    parser.add_argument(
         "source",
         help="AV source address",
     )

@@ -4,6 +4,7 @@ from argparse import Namespace
 from asyncio import get_running_loop
 from asyncio import run as asyncio_run
 from asyncio import sleep as asyncio_sleep
+from asyncio import run_coroutine_threadsafe
 from datetime import datetime
 from tkinter import NW, Canvas, Tk
 from typing import Final, Optional
@@ -70,7 +71,10 @@ class DefaultApp(Tk, AsyncMediaCallbacksInterface):
 
     def on_destroy(self) -> None:
         logger.warning("Exit signal detected")
-        self._exit = True
+        run_coroutine_threadsafe(self.close(), get_running_loop())
+
+    def is_exit(self) -> bool:
+        return self._exit and not self._player.is_open()
 
     @overrides
     async def on_container_begin(self) -> None:
@@ -84,6 +88,8 @@ class DefaultApp(Tk, AsyncMediaCallbacksInterface):
     async def on_video_frame(
         self, frame: ndarray, start: datetime, last: datetime
     ) -> None:
+        if self.is_exit():
+            return
         size = self.winfo_width(), self.winfo_height()
         self._array = frame[:, :, ::-1]
         self._image = fromarray(self._array, mode="RGB").resize(size)
@@ -95,21 +101,29 @@ class DefaultApp(Tk, AsyncMediaCallbacksInterface):
     async def on_audio_frame(
         self, frame: ndarray, start: datetime, last: datetime
     ) -> None:
+        if self.is_exit():
+            return
         pass
 
     @overrides
     async def on_segment(
         self, directory: str, filename: str, start: datetime, last: datetime
     ) -> None:
+        if self.is_exit():
+            return
         pass
 
     async def run(self) -> None:
         self._player.open(get_running_loop())
         try:
-            while not self._exit and self._player.is_open():
-                self.update()
+            while not self.is_exit():
                 await asyncio_sleep(self._sleep)
         finally:
+            await self.close()
+
+    async def close(self) -> None:
+        self._exit = True
+        if self._player.is_open():
             self._player.close()
 
 
