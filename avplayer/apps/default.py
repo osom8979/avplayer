@@ -25,7 +25,7 @@ def default_main(args: Namespace, printer: Callable[..., None] = print) -> int:
     app = DefaultApp(args, printer)
 
     try:
-        app.run_streamer_with_webserver()
+        app.run_webserver_with_avio()
     except CancelledError:
         logger.debug("An cancelled signal was detected")
         return 0

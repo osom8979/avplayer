@@ -3,7 +3,7 @@
 from argparse import Namespace
 from asyncio import Task, create_task
 from contextlib import asynccontextmanager
-from typing import Callable
+from typing import Callable, Optional
 
 from fastapi import APIRouter, FastAPI
 from numpy import uint8
@@ -16,7 +16,7 @@ from avplayer.logging.logging import logger
 
 
 class AsyncAvWebAppBase(AsyncAvAppBase):
-    streamer_task: Task[None]
+    _avio_task: Optional[Task[None]]
 
     def __init__(self, args: Namespace, printer: Callable[..., None] = print):
         super().__init__(args, printer)
@@ -27,17 +27,7 @@ class AsyncAvWebAppBase(AsyncAvAppBase):
         self._app = FastAPI(lifespan=self._lifespan)
         self._app.include_router(self._router)
 
-    @asynccontextmanager
-    async def _lifespan(self, app: FastAPI):
-        assert self._app == app
-        self.streamer_task = create_task(self.async_run_streamer(), name="streamer")
-        yield
-        self.shutdown_streaming()
-        await self.streamer_task
-
-    @override
-    async def on_image(self, image: NDArray[uint8]) -> NDArray[uint8]:
-        return image
+        self._avio_task = None
 
     @property
     def router(self):
@@ -47,16 +37,35 @@ class AsyncAvWebAppBase(AsyncAvAppBase):
     def app(self):
         return self._app
 
+    @asynccontextmanager
+    async def _lifespan(self, app: FastAPI):
+        assert self._app == app
+        assert self._avio_task is None
+        self._avio_task = create_task(self.async_run_avio(), name="avio")
+
+        yield
+
+        self.shutdown_avio()
+
+        assert self._avio_task is not None
+        await self._avio_task
+        self._avio_task = None
+
+    @override
+    async def on_image(self, image: NDArray[uint8]) -> NDArray[uint8]:
+        return image
+
     async def health(self):
-        streamer_task_name = self.streamer_task.get_name()
-        streamer_task_live = not self.streamer_task.done()
+        assert self._avio_task is not None
+        avio_task_name = self._avio_task.get_name()
+        avio_task_live = not self._avio_task.done()
         return {
             "tasks": {
-                streamer_task_name: streamer_task_live,
+                avio_task_name: avio_task_live,
             }
         }
 
-    def run_streamer_with_webserver(self) -> None:
+    def run_webserver_with_avio(self) -> None:
         uvicorn_run(
             self._app,
             host=self.bind,

@@ -25,6 +25,9 @@ from avplayer.variables import (
     DEFAULT_AV_READ_TIMEOUT,
     DEFAULT_IO_BUFFER_SIZE,
 )
+from avplayer.variables import VERBOSE_LEVEL_0 as VL0
+from avplayer.variables import VERBOSE_LEVEL_1 as VL1
+from avplayer.variables import VERBOSE_LEVEL_2 as VL2
 
 
 class AvIo:
@@ -37,7 +40,7 @@ class AvIo:
     def __init__(
         self,
         source: str,
-        destination: Optional[str] = None,
+        output: Optional[str] = None,
         done: Optional[Event] = None,
         file_format=AUTOMATIC_DETECT_FILE_FORMAT,
         buffer_size=DEFAULT_IO_BUFFER_SIZE,
@@ -52,7 +55,7 @@ class AvIo:
         self._output_stream = None
 
         self._source = source
-        self._destination = destination if destination else str()
+        self._output = output if output else str()
         self._done = done if done else Event()
         self._file_format = file_format
 
@@ -70,15 +73,15 @@ class AvIo:
         self._buffer_size = buffer_size
         self._timeout = open_timeout, read_timeout
         self._source_size = source_size
-        self._destination_size = destination_size
+        self._output_size = destination_size
         self._re_request_wait_seconds = 0.001
         self._verbose = verbose
 
         logger.info(f"Input file: '{self._source}'")
         logger.info(f"Input container options: {self._input_options}")
 
-        if self._destination:
-            logger.info(f"Output file: '{self._destination}'")
+        if self._output:
+            logger.info(f"Output file: '{self._output}'")
             logger.info(f"Output file format: {self._file_format}")
             logger.info(f"Output stream pixel format: {self._output_stream_pix_format}")
             logger.info(f"Output stream options: {self._output_stream_options}")
@@ -87,12 +90,12 @@ class AvIo:
         logger.info(f"Open timeout: {self._timeout[0]:.3f}s")
         logger.info(f"Read timeout: {self._timeout[1]:.3f}s")
 
-        self._iter_step = StepAvg("Iter", logger, logging_step, verbose, 0)
-        self._event_step = StepAvg("Event", logger, logging_step, verbose, 1)
-        self._demux_step = StepAvg("Demux", logger, logging_step, verbose, 2)
-        self._decode_step = StepAvg("Decode", logger, logging_step, verbose, 2)
-        self._encode_step = StepAvg("Encode", logger, logging_step, verbose, 2)
-        self._mux_step = StepAvg("Mux", logger, logging_step, verbose, 2)
+        self._iter_step = StepAvg("Iter", logger, logging_step, verbose, VL0)
+        self._callback_step = StepAvg("Callback", logger, logging_step, verbose, VL1)
+        self._demux_step = StepAvg("Demux", logger, logging_step, verbose, VL2)
+        self._decode_step = StepAvg("Decode", logger, logging_step, verbose, VL2)
+        self._encode_step = StepAvg("Encode", logger, logging_step, verbose, VL2)
+        self._mux_step = StepAvg("Mux", logger, logging_step, verbose, VL2)
 
     @property
     def verbose(self) -> int:
@@ -112,9 +115,9 @@ class AvIo:
         )
 
     def _open_output_container(self) -> OutputContainer:
-        logger.debug(f"Open the output container: '{self._destination}'")
+        logger.debug(f"Open the output container: '{self._output}'")
         return av_open(
-            self._destination,
+            self._output,
             mode="w",
             format=self._file_format,
             buffer_size=self._buffer_size,
@@ -140,16 +143,16 @@ class AvIo:
             input_stream.thread_type = "AUTO"
             input_stream.codec_context.low_delay = True
 
-            if self._destination:
+            if self._output:
                 output_container = self._open_output_container()
                 output_stream_pix_format = self._output_stream_pix_format
                 output_stream_options = self._output_stream_options
 
                 output_stream = output_container.add_stream("libx264")
 
-                if self._destination_size is not None:
-                    output_stream.width = self._destination_size[0]
-                    output_stream.height = self._destination_size[1]
+                if self._output_size is not None:
+                    output_stream.width = self._output_size[0]
+                    output_stream.height = self._output_size[1]
                 elif self._source_size is not None:
                     output_stream.width = self._source_size[0]
                     output_stream.height = self._source_size[1]
@@ -219,7 +222,7 @@ class AvIo:
         assert False, "Inaccessible section"
 
     def send(self, image: NDArray[uint8]) -> None:
-        if not self._destination:
+        if not self._output:
             return
 
         assert self._output_container is not None
@@ -244,10 +247,10 @@ class AvIo:
     def iter(self, coro) -> None:
         frame = next(self.recv())
 
-        self._event_step.do_enter()
+        self._callback_step.do_enter()
         image = self.frame_to_ndarray(frame)
         result = coro(image)
-        self._event_step.do_exit()
+        self._callback_step.do_exit()
 
         if result is not None:
             self.send(result)

@@ -28,7 +28,7 @@ class AppBase:
         assert isinstance(args.port, int)
         assert isinstance(args.timeout, float)
         assert isinstance(args.output, str)
-        assert isinstance(args.source, str)
+        assert isinstance(args.input, str)
 
         self._debug = args.debug
         self._verbose = args.verbose
@@ -41,7 +41,7 @@ class AppBase:
         self._port = args.port
         self._timeout = args.timeout
         self._output = args.output
-        self._source = args.source
+        self._input = args.input
 
     @property
     def args(self) -> Namespace:
@@ -88,23 +88,23 @@ class AppBase:
         return self._output
 
     @property
-    def source(self) -> str:
-        return self._source
+    def input(self) -> str:
+        return self._input
 
     @property
-    def source_size(self) -> Optional[Tuple[int, int]]:
-        if self._args.source_size is not None:
-            assert isinstance(self._args.source_size, str)
-            x, y = self._args.source_size.split("x")
+    def input_size(self) -> Optional[Tuple[int, int]]:
+        if self._args.input_size is not None:
+            assert isinstance(self._args.input_size, str)
+            x, y = self._args.input_size.split("x")
             return int(x), int(y)
         else:
             return None
 
     @property
-    def destination_size(self) -> Optional[Tuple[int, int]]:
-        if self._args.destination_size is not None:
-            assert isinstance(self._args.destination_size, str)
-            x, y = self._args.destination_size.split("x")
+    def output_size(self) -> Optional[Tuple[int, int]]:
+        if self._args.output_size is not None:
+            assert isinstance(self._args.output_size, str)
+            x, y = self._args.output_size.split("x")
             return int(x), int(y)
         else:
             return None
@@ -126,3 +126,11 @@ class AppBase:
 
     def inspect_size(self, file: str) -> Tuple[int, int]:
         return inspect_source_size(file, self._ffprobe_path)
+
+    def inspect_output_format(self) -> str:
+        try:
+            if self.output:
+                return self.inspect_format(self.output)
+        except:  # noqa
+            pass
+        return AUTOMATIC_DETECT_FILE_FORMAT

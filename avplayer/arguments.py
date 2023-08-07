@@ -129,15 +129,15 @@ def default_argument_parser() -> ArgumentParser:
     )
 
     parser.add_argument(
-        "--source-size",
-        "-ss",
+        "--input-size",
+        "-is",
         default=None,
         metavar="WxH",
         help="Source Size",
     )
     parser.add_argument(
-        "--destination-size",
-        "-ds",
+        "--output-size",
+        "-os",
         default=None,
         metavar="WxH",
         help="Destination Size",
@@ -150,8 +150,8 @@ def default_argument_parser() -> ArgumentParser:
         help="AV output address",
     )
     parser.add_argument(
-        "source",
-        help="AV source address",
+        "intput",
+        help="AV input address",
     )
 
     return parser
