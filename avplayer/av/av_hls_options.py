@@ -9,7 +9,7 @@ from avplayer.variables import HLS_MASTER_FILENAME, HLS_SEGMENT_FILENAME
 
 
 @dataclass
-class HlsOutputOptions:
+class HlsOutputAvOptions:
     destination_dir: str
     """Local directory to store processed segmentation files.
     """

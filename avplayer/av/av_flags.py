@@ -1,14 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from typing import NamedTuple, Optional
-
 from av.audio.stream import AudioStream
 from av.stream import Stream
 from av.video import VideoStream
-
-from avplayer.collections.frame_collection import FrameCollection
-from avplayer.media.media_kind import MediaKind
-from avplayer.variables import DEFAULT_FRAME_QUEUE_MAX
 
 
 def inject_go_faster_stream(stream: Stream) -> None:
@@ -109,27 +103,12 @@ def inject_speedup_tricks_stream(stream: Stream) -> None:
     setattr(stream.codec_context, "flags2", "FAST")
 
 
-class StreamAndQueue(NamedTuple):
-    stream: Optional[Stream]
-    queue: Optional[FrameCollection]
-
-
-def init_stream(
-    kind: MediaKind,
-    index: Optional[int],
-    streams,
-    *,
-    max_queue=DEFAULT_FRAME_QUEUE_MAX,
+def set_stream_flags(
+    stream: Stream,
     go_faster=False,
     low_delay=False,
     speedup_tricks=False,
-) -> StreamAndQueue:
-    assert kind in [MediaKind.Video, MediaKind.Audio]
-    if index is None or index >= len(streams):
-        return StreamAndQueue(None, None)
-
-    assert index >= 0
-    stream = streams[index]
+) -> None:
     assert isinstance(stream, VideoStream) or isinstance(stream, AudioStream)
 
     if go_faster:
@@ -138,5 +117,3 @@ def init_stream(
         inject_low_delay_stream(stream)
     if speedup_tricks:
         inject_speedup_tricks_stream(stream)
-
-    return StreamAndQueue(stream, FrameCollection(kind=kind, max_size=max_queue))

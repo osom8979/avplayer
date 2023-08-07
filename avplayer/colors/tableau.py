@@ -1,0 +1,31 @@
+# -*- coding: utf-8 -*-
+
+from functools import lru_cache
+from typing import List, Tuple
+
+BLUE = (0xB4, 0x77, 0x1F)
+ORANGE = (0x0E, 0x7F, 0xFF)
+GREEN = (0x2C, 0xA0, 0x2C)
+RED = (0x28, 0x27, 0xD6)
+PURPLE = (0xBD, 0x67, 0x94)
+BROWN = (0x4B, 0x56, 0x8C)
+PINK = (0xC2, 0x77, 0xE3)
+GRAY = (0x7F, 0x7F, 0x7F)
+OLIVE = (0x22, 0xBD, 0xBC)
+CYAN = (0xCF, 0xBE, 0x17)
+
+
+@lru_cache
+def colors() -> List[Tuple[int, int, int]]:
+    return [
+        BLUE,
+        ORANGE,
+        GREEN,
+        RED,
+        PURPLE,
+        BROWN,
+        PINK,
+        GRAY,
+        OLIVE,
+        CYAN,
+    ]

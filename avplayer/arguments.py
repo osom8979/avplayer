@@ -11,12 +11,15 @@ DESCRIPTION: Final[str] = "PyAV Media Player"
 EPILOG = f"""
 Examples:
 
-    Play RTSP streaming sources:
-        {PROG} -c -d rtsp://0.0.0.0:8554/live.sdp
+  Play RTSP streaming sources:
+    {PROG} rtsp://0.0.0.0:8554/live.sdp
 """
 
-
 DEFAULT_SEVERITY: Final[str] = SEVERITY_NAME_INFO
+DEFAULT_BIND: Final[str] = "0.0.0.0"
+DEFAULT_PORT: Final[int] = 8080
+DEFAULT_TIMEOUT: Final[float] = 8.0
+DEFAULT_LOGGING_STEP: Final[int] = 1000
 
 
 @lru_cache
@@ -34,20 +37,47 @@ def default_argument_parser() -> ArgumentParser:
         epilog=EPILOG,
         formatter_class=RawDescriptionHelpFormatter,
     )
-    parser.add_argument(
+
+    logging_group = parser.add_mutually_exclusive_group()
+    logging_group.add_argument(
         "--colored-logging",
         "-c",
         action="store_true",
         default=False,
         help="Use colored logging",
     )
-    parser.add_argument(
+    logging_group.add_argument(
         "--simple-logging",
         "-s",
         action="store_true",
         default=False,
         help="Use simple logging",
     )
+
+    parser.add_argument(
+        "--use-uvloop",
+        action="store_true",
+        default=False,
+        help="Replace the event loop with uvloop",
+    )
+
+    parser.add_argument(
+        "--ffmpeg-path",
+        default="ffmpeg",
+        help="FFmpeg command path",
+    )
+    parser.add_argument(
+        "--ffprobe-path",
+        default="ffprobe",
+        help="FFprobe command path",
+    )
+    parser.add_argument(
+        "--logging-step",
+        type=int,
+        default=DEFAULT_LOGGING_STEP,
+        help="An iterative step that emits statistics results to a logger",
+    )
+
     parser.add_argument(
         "--severity",
         choices=SEVERITIES,
@@ -76,14 +106,54 @@ def default_argument_parser() -> ArgumentParser:
     )
 
     parser.add_argument(
+        "--bind",
+        "-b",
+        default=DEFAULT_BIND,
+        metavar="bind",
+        help=f"Bind address (default: '{DEFAULT_BIND}')",
+    )
+    parser.add_argument(
+        "--port",
+        "-p",
+        type=int,
+        default=DEFAULT_PORT,
+        metavar="port",
+        help=f"Port number (default: '{DEFAULT_PORT}')",
+    )
+    parser.add_argument(
+        "--timeout",
+        "-t",
+        default=DEFAULT_TIMEOUT,
+        type=float,
+        help=f"Request timeout in seconds (default: {DEFAULT_TIMEOUT})",
+    )
+
+    parser.add_argument(
+        "--source-size",
+        "-ss",
+        default=None,
+        metavar="WxH",
+        help="Source Size",
+    )
+    parser.add_argument(
+        "--destination-size",
+        "-ds",
+        default=None,
+        metavar="WxH",
+        help="Destination Size",
+    )
+
+    parser.add_argument(
         "--output",
         "-o",
+        default="",
         help="AV output address",
     )
     parser.add_argument(
         "source",
         help="AV source address",
     )
+
     return parser
 
 

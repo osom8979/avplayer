@@ -3,16 +3,11 @@
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from avplayer.variables import (
-    DEFAULT_AV_TIMEOUT,
-    DEFAULT_FRAME_QUEUE_MAX,
-    DEFAULT_IO_BUFFER_SIZE,
-    INFINITE_FRAME_QUEUE_SIZE,
-)
+from avplayer.variables import DEFAULT_AV_TIMEOUT, DEFAULT_IO_BUFFER_SIZE
 
 
 @dataclass
-class CommonMediaOptions:
+class CommonAvOptions:
     format: Optional[str] = None
     """Specific format to use.
     Defaults to 'autodect'.
@@ -88,7 +83,7 @@ class CommonMediaOptions:
 
 
 @dataclass
-class InputMediaOptions(CommonMediaOptions):
+class InputAvOptions(CommonAvOptions):
     video_index: Optional[int] = 0
     """The video index of the InputContainer.
     """
@@ -99,28 +94,24 @@ class InputMediaOptions(CommonMediaOptions):
 
 
 @dataclass
-class OutputMediaOptions(CommonMediaOptions):
-    enable_video: bool = True
+class OutputAvOptions(CommonAvOptions):
+    enable_video: bool = False
     """Use video input container
     """
 
-    enable_audio: bool = True
+    enable_audio: bool = False
     """Use audio input container
     """
 
 
 @dataclass
-class MediaOptions:
-    input: InputMediaOptions = field(default_factory=InputMediaOptions)
+class AvOptions:
+    input: InputAvOptions = field(default_factory=InputAvOptions)
     """Input file options.
     """
 
-    output: OutputMediaOptions = field(default_factory=OutputMediaOptions)
+    output: OutputAvOptions = field(default_factory=OutputAvOptions)
     """Output file options.
-    """
-
-    max_frame_queue: Optional[int] = None
-    """Maximum AV frame queue size.
     """
 
     name: Optional[str] = None
@@ -138,12 +129,3 @@ class MediaOptions:
     speedup_tricks: bool = False
     """Flag2 is fast. This flag2 is allow non-spec compliant speedup tricks.
     """
-
-    def get_max_frame_queue(self) -> int:
-        if self.max_frame_queue is not None:
-            if self.max_frame_queue >= 1:
-                return self.max_frame_queue
-            else:
-                return INFINITE_FRAME_QUEUE_SIZE
-        else:
-            return DEFAULT_FRAME_QUEUE_MAX

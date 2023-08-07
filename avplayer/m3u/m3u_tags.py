@@ -1,0 +1,54 @@
+# -*- coding: utf-8 -*-
+#
+# https://datatracker.ietf.org/doc/html/draft-pantos-hls-rfc8216bis-08
+
+from typing import Literal
+
+# Basic Tags
+EXTM3U = "#EXTM3U"
+EXT_X_VERSION = "#EXT-X-VERSION"
+
+# Media or Master Playlist Tags
+EXT_X_INDEPENDENT_SEGMENTS = "#EXT-X-INDEPENDENT-SEGMENTS"
+EXT_X_START = "#EXT-X-START"
+EXT_X_DEFINE = "#EXT-X-DEFINE"
+
+# Media Playlist Tags
+EXT_X_TARGETDURATION = "#EXT-X-TARGETDURATION"
+EXT_X_MEDIA_SEQUENCE = "#EXT-X-MEDIA-SEQUENCE"
+EXT_X_DISCONTINUITY_SEQUENCE = "#EXT-X-DISCONTINUITY-SEQUENCE"
+EXT_X_ENDLIST = "#EXT-X-ENDLIST"
+EXT_X_PLAYLIST_TYPE = "#EXT-X-PLAYLIST-TYPE"
+EXT_X_I_FRAMES_ONLY = "#EXT-X-I-FRAMES-ONLY"
+EXT_X_PART_INF = "#EXT-X-PART-INF"
+EXT_X_SERVER_CONTROL = "#EXT-X-SERVER-CONTROL"
+
+# Media Segment Tags
+EXTINF = "#EXTINF"
+EXT_X_BYTERANGE = "#EXT-X-BYTERANGE"
+EXT_X_DISCONTINUITY = "#EXT-X-DISCONTINUITY"
+EXT_X_KEY = "#EXT-X-KEY"
+EXT_X_MAP = "#EXT-X-MAP"
+EXT_X_PROGRAM_DATE_TIME = "#EXT-X-PROGRAM-DATE-TIME"
+EXT_X_GAP = "#EXT-X-GAP"
+EXT_X_BITRATE = "#EXT-X-BITRATE"
+EXT_X_PART = "#EXT-X-PART"
+
+# Media Metadata Tags
+EXT_X_DATERANGE = "#EXT-X-DATERANGE"
+EXT_X_SKIP = "#EXT-X-SKIP"
+EXT_X_PRELOAD_HINT = "#EXT-X-PRELOAD-HINT"
+EXT_X_RENDITION_REPORT = "#EXT-X-RENDITION-REPORT"
+
+# Master Playlist Tags
+EXT_X_MEDIA = "#EXT-X-MEDIA"
+EXT_X_STREAM_INF = "#EXT-X-STREAM-INF"
+EXT_X_I_FRAME_STREAM_INF = "#EXT-X-I-FRAME-STREAM-INF"
+EXT_X_SESSION_DATA = "#EXT-X-SESSION-DATA"
+EXT_X_SESSION_KEY = "#EXT-X-SESSION-KEY"
+
+# https://developer.apple.com/documentation/http_live_streaming/about_the_ext-x-version_tag
+ExtXVersionLiteral = Literal[2, 3, 4, 5, 6, 7, 8]
+ExtXKey_MethodLiteral = Literal["NONE", "AES-128", "SAMPLE-AES"]
+ExtXStreamInf_HdcpLevelLiteral = Literal["TYPE-0", "TYPE-1", "NONE"]
+ExtXStreamInf_VideoRangeLiteral = Literal["SDR", "HLG", "PQ"]

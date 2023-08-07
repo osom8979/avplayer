@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from sys import exit as sys_exit
-from sys import stderr
 from typing import Callable, List, Optional
 
 from avplayer.apps.default import default_main
@@ -20,11 +19,6 @@ def main(
     printer: Callable[..., None] = print,
 ) -> int:
     args = get_default_arguments(cmdline)
-
-    if args.colored_logging and args.simple_logging:
-        _msg = "The 'colored_logging' flag and the 'simple_logging' flag cannot coexist"
-        printer(_msg, file=stderr)
-        return 1
 
     colored_logging = args.colored_logging
     simple_logging = args.simple_logging
@@ -48,14 +42,8 @@ def main(
     else:
         set_root_level(severity)
 
-    logger.debug(f"Arguments: {args}")
-
-    try:
-        default_main(args)
-        return 0
-    except BaseException as e:
-        logger.exception(e)
-        return 1
+    logger.debug(f"Parsed arguments: {args}")
+    return default_main(args, printer)
 
 
 if __name__ == "__main__":
