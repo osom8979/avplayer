@@ -1,26 +1,25 @@
 # -*- coding: utf-8 -*-
 
-from abc import abstractmethod
 from argparse import Namespace
 from asyncio import AbstractEventLoop, get_running_loop, run_coroutine_threadsafe
 from asyncio.exceptions import CancelledError
 from concurrent.futures.thread import ThreadPoolExecutor
 from datetime import datetime
 from functools import partial
-from typing import Callable
 
 from numpy import uint8
 from numpy.typing import NDArray
 
+from avplayer.apps.async_av_interface import AsyncAvEmptyInterface
 from avplayer.apps.av_app_base import AvAppBase
 from avplayer.debug.step_avg import StepAvg
 from avplayer.logging.logging import logger
 from avplayer.variables import VERBOSE_LEVEL_2
 
 
-class AsyncAvAppBase(AvAppBase):
-    def __init__(self, args: Namespace, printer: Callable[..., None] = print):
-        super().__init__(args, printer)
+class AsyncAvAppBase(AvAppBase, AsyncAvEmptyInterface):
+    def __init__(self, args: Namespace):
+        super().__init__(args)
 
         self._async_enqueue_step = StepAvg(
             "AsyncEnqueue",
@@ -36,10 +35,6 @@ class AsyncAvAppBase(AvAppBase):
             self.verbose,
             VERBOSE_LEVEL_2,
         )
-
-    @abstractmethod
-    async def on_image(self, image: NDArray[uint8]) -> NDArray[uint8]:
-        raise NotImplementedError
 
     async def _call_async_image(self, image: NDArray[uint8], begin: datetime) -> None:
         self._async_enqueue_step.do_enter(begin)

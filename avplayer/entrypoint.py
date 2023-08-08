@@ -12,6 +12,7 @@ from avplayer.logging.logging import (
     set_root_level,
     set_simple_logging_config,
 )
+from avplayer.variables import PRINTER_NAMESPACE_ATTR_KEY
 
 
 def main(
@@ -32,6 +33,10 @@ def main(
     assert isinstance(debug, bool)
     assert isinstance(verbose, int)
 
+    assert not hasattr(args, PRINTER_NAMESPACE_ATTR_KEY)
+    setattr(args, PRINTER_NAMESPACE_ATTR_KEY, printer)
+    assert hasattr(args, PRINTER_NAMESPACE_ATTR_KEY)
+
     if colored_logging:
         set_colored_formatter_logging_config()
     elif simple_logging:
@@ -43,7 +48,7 @@ def main(
         set_root_level(severity)
 
     logger.debug(f"Parsed arguments: {args}")
-    return default_main(args, printer)
+    return default_main(args)
 
 
 if __name__ == "__main__":

@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 
 from argparse import Namespace
-from typing import Callable
 
 from avplayer.apps.app_base import AppBase
 from avplayer.av.av_io import AvIo
 
 
 class AvAppBase(AppBase):
-    def __init__(self, args: Namespace, printer: Callable[..., None] = print):
-        super().__init__(args, printer)
+    def __init__(self, args: Namespace):
+        super().__init__(args)
+
         self._avio = AvIo(
             self.input,
             self.output,

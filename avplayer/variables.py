@@ -53,6 +53,8 @@ DEFAULT_AV_TIMEOUT: Final[Tuple[float, float]] = (
 HLS_MASTER_FILENAME: Final[str] = "master.m3u8"
 HLS_SEGMENT_FILENAME: Final[str] = "%Y-%m-%d_%H-%M-%S.ts"
 
+PRINTER_NAMESPACE_ATTR_KEY: Final[str] = "_printer"
+
 VERBOSE_LEVEL_0: Final[int] = 0
 VERBOSE_LEVEL_1: Final[int] = 1
 VERBOSE_LEVEL_2: Final[int] = 2

@@ -3,26 +3,28 @@
 from argparse import Namespace
 from asyncio import Task, create_task
 from contextlib import asynccontextmanager
-from typing import Callable, Optional
+from typing import Optional
 
 from fastapi import APIRouter, FastAPI
-from numpy import uint8
-from numpy.typing import NDArray
-from overrides import override
 from uvicorn import run as uvicorn_run
 
 from avplayer.apps.async_av_app_base import AsyncAvAppBase
+from avplayer.apps.async_av_interface import AsyncAvEmptyInterface
 from avplayer.logging.logging import logger
 
 
-class AsyncAvWebAppBase(AsyncAvAppBase):
+class AsyncAvWebAppBase(AsyncAvAppBase, AsyncAvEmptyInterface):
     _avio_task: Optional[Task[None]]
 
-    def __init__(self, args: Namespace, printer: Callable[..., None] = print):
-        super().__init__(args, printer)
+    def __init__(self, args: Namespace):
+        super().__init__(args)
+
+        GET = "GET"  # noqa
+        POST = "POST"  # noqa
 
         self._router = APIRouter()
-        self._router.add_api_route("/health", self.health, methods=["GET"])
+        self._router.add_api_route("/health", self.health, methods=[GET])
+        self._router.add_api_route("/keypressed", self.keypressed, methods=[POST])
 
         self._app = FastAPI(lifespan=self._lifespan)
         self._app.include_router(self._router)
@@ -51,10 +53,6 @@ class AsyncAvWebAppBase(AsyncAvAppBase):
         await self._avio_task
         self._avio_task = None
 
-    @override
-    async def on_image(self, image: NDArray[uint8]) -> NDArray[uint8]:
-        return image
-
     async def health(self):
         assert self._avio_task is not None
         avio_task_name = self._avio_task.get_name()
@@ -64,6 +62,9 @@ class AsyncAvWebAppBase(AsyncAvAppBase):
                 avio_task_name: avio_task_live,
             }
         }
+
+    async def keypressed(self, keycode: str, shift: bool, ctrl: bool, alt: bool):
+        await self.on_key_pressed(keycode=keycode, shift=shift, ctrl=ctrl, alt=alt)
 
     def run_webserver_with_avio(self) -> None:
         uvicorn_run(

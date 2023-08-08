@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from argparse import Namespace
-from typing import Callable, Optional, Tuple
+from typing import Optional, Tuple
 
 from avplayer.ffmpeg.ffmpeg import (
     AUTOMATIC_DETECT_FILE_FORMAT,
@@ -11,12 +11,12 @@ from avplayer.ffmpeg.ffmpeg import (
     find_bits_per_pixel,
 )
 from avplayer.ffmpeg.ffprobe import inspect_source_size
+from avplayer.variables import PRINTER_NAMESPACE_ATTR_KEY
 
 
 class AppBase:
-    def __init__(self, args: Namespace, printer: Callable[..., None] = print):
+    def __init__(self, args: Namespace):
         self._args = args
-        self._printer = printer
 
         assert isinstance(args.debug, bool)
         assert isinstance(args.verbose, int)
@@ -33,7 +33,6 @@ class AppBase:
         self._debug = args.debug
         self._verbose = args.verbose
         self._use_uvloop = args.use_uvloop
-        self._use_uvloop = args.use_uvloop
         self._ffmpeg_path = args.ffmpeg_path
         self._ffprobe_path = args.ffprobe_path
         self._logging_step = args.logging_step
@@ -42,6 +41,9 @@ class AppBase:
         self._timeout = args.timeout
         self._output = args.output
         self._input = args.input
+
+        assert hasattr(args, PRINTER_NAMESPACE_ATTR_KEY)
+        self._printer = getattr(args, PRINTER_NAMESPACE_ATTR_KEY)
 
     @property
     def args(self) -> Namespace:
@@ -109,8 +111,8 @@ class AppBase:
         else:
             return None
 
-    def print(self, *args) -> None:
-        self._printer(*args)
+    def print(self, *args, **kwargs) -> None:
+        self._printer(*args, **kwargs)
 
     def inspect_channels(self, pixel_format=DEFAULT_PIXEL_FORMAT) -> int:
         bits_per_pixel = find_bits_per_pixel(pixel_format, self._ffmpeg_path)

@@ -11,8 +11,29 @@ DESCRIPTION: Final[str] = "PyAV Media Player"
 EPILOG = f"""
 Examples:
 
+  Debugging flags:
+    {PROG} -c -d -vv ...
+
   Play RTSP streaming sources:
-    {PROG} rtsp://0.0.0.0:8554/live.sdp
+    {PROG} rtsp://localhost:8554/live.sdp
+
+RTSP test sample:
+
+  docker run --rm -it \
+    -e ENABLE_TIME_OVERLAY=true \
+    -e RTSP_PORT=9999 \
+    -p 9999:9999 \
+    ullaakut/rtspatt
+
+RTSP proxy:
+
+  docker run --rm -it \
+    -e MTX_PROTOCOLS=tcp \
+    -p 8554:8554 \
+    -p 1935:1935 \
+    -p 8888:8888 \
+    -p 8889:8889 \
+    bluenviron/mediamtx
 """
 
 DEFAULT_SEVERITY: Final[str] = SEVERITY_NAME_INFO

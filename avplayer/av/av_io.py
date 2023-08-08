@@ -221,7 +221,10 @@ class AvIo:
                 assert False, "Inaccessible section"
         assert False, "Inaccessible section"
 
-    def send(self, image: NDArray[uint8]) -> None:
+    def send(self, image: Optional[NDArray[uint8]]) -> None:
+        if image is None:
+            return
+
         if not self._output:
             return
 
@@ -252,8 +255,7 @@ class AvIo:
         result = coro(image)
         self._callback_step.do_exit()
 
-        if result is not None:
-            self.send(result)
+        self.send(result)
 
     def run(self, coro) -> None:
         try:
