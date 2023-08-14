@@ -10,7 +10,6 @@ from avplayer.ffmpeg.ffmpeg import (
     detect_file_format,
     find_bits_per_pixel,
 )
-from avplayer.ffmpeg.ffprobe import inspect_source_size
 from avplayer.variables import PRINTER_NAMESPACE_ATTR_KEY
 
 
@@ -125,9 +124,6 @@ class AppBase:
             return detect_file_format(file, self._ffmpeg_path)
         else:
             return file_format
-
-    def inspect_size(self, file: str) -> Tuple[int, int]:
-        return inspect_source_size(file, self._ffprobe_path)
 
     def inspect_output_format(self) -> str:
         try:

@@ -13,7 +13,7 @@ class AvAppBase(AppBase):
         self._avio = AvIo(
             self.input,
             self.output,
-            file_format=self.inspect_output_format,
+            file_format=self.inspect_output_format(),
             source_size=self.input_size,
             destination_size=self.output_size,
             logging_step=self.logging_step,

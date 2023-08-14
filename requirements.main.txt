@@ -1,8 +1,4 @@
 av
 coloredlogs
-fastapi[all]
 numpy
-opencv-python-headless
-orjson
 overrides
-uvloop

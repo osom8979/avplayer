@@ -5,9 +5,6 @@ from asyncio import Task, create_task
 from contextlib import asynccontextmanager
 from typing import Optional
 
-from fastapi import APIRouter, FastAPI
-from uvicorn import run as uvicorn_run
-
 from avplayer.apps.async_av_app_base import AsyncAvAppBase
 from avplayer.apps.async_av_interface import AsyncAvEmptyInterface
 from avplayer.logging.logging import logger
@@ -18,6 +15,8 @@ class AsyncAvWebAppBase(AsyncAvAppBase, AsyncAvEmptyInterface):
 
     def __init__(self, args: Namespace):
         super().__init__(args)
+
+        from fastapi import APIRouter, FastAPI
 
         GET = "GET"  # noqa
         POST = "POST"  # noqa
@@ -40,7 +39,7 @@ class AsyncAvWebAppBase(AsyncAvAppBase, AsyncAvEmptyInterface):
         return self._app
 
     @asynccontextmanager
-    async def _lifespan(self, app: FastAPI):
+    async def _lifespan(self, app):
         assert self._app == app
         assert self._avio_task is None
         self._avio_task = create_task(self.async_run_avio(), name="avio")
@@ -67,7 +66,9 @@ class AsyncAvWebAppBase(AsyncAvAppBase, AsyncAvEmptyInterface):
         await self.on_key_pressed(keycode=keycode, shift=shift, ctrl=ctrl, alt=alt)
 
     def run_webserver_with_avio(self) -> None:
-        uvicorn_run(
+        from uvicorn import run
+
+        run(
             self._app,
             host=self.bind,
             port=self.port,

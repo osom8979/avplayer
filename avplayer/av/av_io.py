@@ -252,7 +252,7 @@ class AvIo:
 
         self._callback_step.do_enter()
         image = self.frame_to_ndarray(frame)
-        result = coro(image)
+        result = coro(image) if coro else image
         self._callback_step.do_exit()
 
         self.send(result)

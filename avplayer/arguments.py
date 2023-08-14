@@ -17,23 +17,11 @@ Examples:
   Play RTSP streaming sources:
     {PROG} rtsp://localhost:8554/live.sdp
 
-RTSP test sample:
-
-  docker run --rm -it \
-    -e ENABLE_TIME_OVERLAY=true \
-    -e RTSP_PORT=9999 \
-    -p 9999:9999 \
-    ullaakut/rtspatt
-
-RTSP proxy:
-
-  docker run --rm -it \
-    -e MTX_PROTOCOLS=tcp \
-    -p 8554:8554 \
-    -p 1935:1935 \
-    -p 8888:8888 \
-    -p 8889:8889 \
-    bluenviron/mediamtx
+  RTSP to RTSP Demo:
+    docker run --rm -it -e RTSP_PORT=9999 -p 9999:9999 ullaakut/rtspatt
+    docker run --rm -it -e MTX_PROTOCOLS=tcp -p 8554:8554 bluenviron/mediamtx
+    {PROG} -c -d -vv -o rtsp://localhost:8554/live rtsp://localhost:9999/live.sdp
+    ffplay rtsp://localhost:8554/live
 """
 
 DEFAULT_SEVERITY: Final[str] = SEVERITY_NAME_INFO
@@ -171,7 +159,7 @@ def default_argument_parser() -> ArgumentParser:
         help="AV output address",
     )
     parser.add_argument(
-        "intput",
+        "input",
         help="AV input address",
     )
 

@@ -6,6 +6,9 @@ from subprocess import check_output
 from typing import Final, List, NamedTuple
 from urllib.parse import urlparse
 
+from avplayer.ffmpeg.ffmpeg_formats import FFMPEG_FORMATS
+from avplayer.ffmpeg.ffmpeg_pix_fmts import FFMPEG_PIX_FMTS
+
 BGR24_CHANNELS: Final[int] = 3
 MINIMUM_REALTIME_FRAMES: Final[int] = 12
 MEGA_BYTE_UNIT: Final[int] = 1024 * 1024
@@ -114,7 +117,11 @@ class PixFmt(NamedTuple):
 
 
 def inspect_pix_fmts(ffmpeg_path="ffmpeg") -> List[PixFmt]:
-    output = check_output([ffmpeg_path, "-hide_banner", "-pix_fmts"]).decode("utf-8")
+    try:
+        cmds = [ffmpeg_path, "-hide_banner", "-pix_fmts"]
+        output = check_output(cmds).decode("utf-8")
+    except:  # noqa
+        output = FFMPEG_PIX_FMTS
     lines = output.splitlines()[FFMPEG_PIX_FMTS_HEADER_LINES:]
 
     result = list()
@@ -196,7 +203,11 @@ class FileFormat(NamedTuple):
 
 
 def inspect_file_formats(ffmpeg_path="ffmpeg") -> List[FileFormat]:
-    output = check_output([ffmpeg_path, "-hide_banner", "-formats"]).decode("utf-8")
+    try:
+        cmds = [ffmpeg_path, "-hide_banner", "-formats"]
+        output = check_output(cmds).decode("utf-8")
+    except:  # noqa
+        output = FFMPEG_FORMATS
     lines = output.splitlines()[FFMPEG_FILE_FORMATS_HEADER_LINES:]
 
     result = list()
