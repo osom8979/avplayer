@@ -6,6 +6,12 @@
 
 PyAV Media Player
 
+## Commandline Tools
+
+```shell
+python -m avplayer --help
+```
+
 ## License
 
 See the [LICENSE](./LICENSE) file for details. In summary,

@@ -75,6 +75,8 @@ class AvIo:
         self._source_size = source_size
         self._output_size = destination_size
         self._re_request_wait_seconds = 0.001
+        self._flush_down_threshold = 10
+        self._flush_down_count = 0
         self._verbose = verbose
 
         logger.info(f"Input file: '{self._source}'")
@@ -198,7 +200,12 @@ class AvIo:
                     # We need to skip the "flushing" packets that `demux` generates.
                     if packet.dts is None:
                         logger.warning("Skip the flushing packet")
+                        self._flush_down_count += 1
+                        if self._flush_down_count >= self._flush_down_threshold:
+                            raise EOFError("The flush count has reached its maximum")
                         continue
+                    else:
+                        self._flush_down_count = 0
 
                     self._decode_step.do_enter()
                     frames = packet.decode()
@@ -269,11 +276,11 @@ class AvIo:
         except AVError as e:
             logger.exception(e)
             raise
-        except StopIteration:
-            logger.warning("Stop iteration")
-        except InterruptedError:
-            logger.warning("Interrupt signal detected")
-        except KeyboardInterrupt:
-            logger.warning("Keyboard interrupt signal detected")
-        except EOFError:
-            logger.warning("End of file")
+        except StopIteration as e:
+            logger.warning(f"Stop iteration: {e}")
+        except InterruptedError as e:
+            logger.warning(f"Interrupt signal detected: {e}")
+        except KeyboardInterrupt as e:
+            logger.warning(f"Keyboard interrupt signal detected: {e}")
+        except EOFError as e:
+            logger.warning(f"End of file: {e}")

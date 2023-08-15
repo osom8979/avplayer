@@ -6,20 +6,24 @@ from asyncio.exceptions import CancelledError
 from concurrent.futures.thread import ThreadPoolExecutor
 from datetime import datetime
 from functools import partial
+from typing import Optional
 
 from numpy import uint8
 from numpy.typing import NDArray
 
-from avplayer.apps.async_av_interface import AsyncAvEmptyInterface
-from avplayer.apps.av_app_base import AvAppBase
+from avplayer.apps.base.av_app_base import AvAppBase
+from avplayer.apps.interface.async_av_interface import AsyncAvInterface
 from avplayer.debug.step_avg import StepAvg
 from avplayer.logging.logging import logger
 from avplayer.variables import VERBOSE_LEVEL_2
 
 
-class AsyncAvAppBase(AvAppBase, AsyncAvEmptyInterface):
-    def __init__(self, args: Namespace):
-        super().__init__(args)
+class AsyncAvAppBase(AvAppBase):
+    _callback: Optional[AsyncAvInterface]  # type: ignore[assignment]
+
+    def __init__(self, args: Namespace, callback: Optional[AsyncAvInterface] = None):
+        super().__init__(args, None)
+        self._callback = callback
 
         self._async_enqueue_step = StepAvg(
             "AsyncEnqueue",
@@ -42,7 +46,10 @@ class AsyncAvAppBase(AvAppBase, AsyncAvEmptyInterface):
 
         self._async_imgproc_step.do_enter()
         try:
-            next_image = await self.on_image(image)
+            if self._callback is not None:
+                next_image = await self._callback.on_image(image)
+            else:
+                next_image = image
         except BaseException as e:
             logger.exception(e)
         else:
@@ -55,7 +62,7 @@ class AsyncAvAppBase(AvAppBase, AsyncAvEmptyInterface):
     ) -> None:
         run_coroutine_threadsafe(self._call_async_image(image, datetime.now()), loop)
 
-    async def async_run_avio(self) -> None:
+    async def start_async_app(self) -> None:
         executor = ThreadPoolExecutor(max_workers=1)
         self.open_avio()
         try:

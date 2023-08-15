@@ -5,16 +5,18 @@ from asyncio import Task, create_task
 from contextlib import asynccontextmanager
 from typing import Optional
 
-from avplayer.apps.async_av_app_base import AsyncAvAppBase
-from avplayer.apps.async_av_interface import AsyncAvEmptyInterface
+from avplayer.apps.base.async_av_app_base import AsyncAvAppBase
+from avplayer.apps.interface.async_av_interface import AsyncAvWebInterface
 from avplayer.logging.logging import logger
 
 
-class AsyncAvWebAppBase(AsyncAvAppBase, AsyncAvEmptyInterface):
+class AsyncAvWebAppBase(AsyncAvAppBase):
+    _callback: Optional[AsyncAvWebInterface]  # type: ignore[assignment]
     _avio_task: Optional[Task[None]]
 
-    def __init__(self, args: Namespace):
-        super().__init__(args)
+    def __init__(self, args: Namespace, callback: Optional[AsyncAvWebInterface] = None):
+        super().__init__(args, None)
+        self._callback = callback
 
         from fastapi import APIRouter, FastAPI
 
@@ -42,7 +44,7 @@ class AsyncAvWebAppBase(AsyncAvAppBase, AsyncAvEmptyInterface):
     async def _lifespan(self, app):
         assert self._app == app
         assert self._avio_task is None
-        self._avio_task = create_task(self.async_run_avio(), name="avio")
+        self._avio_task = create_task(self.start_async_app(), name="avio")
 
         yield
 
@@ -62,10 +64,18 @@ class AsyncAvWebAppBase(AsyncAvAppBase, AsyncAvEmptyInterface):
             }
         }
 
-    async def keypressed(self, keycode: str, shift: bool, ctrl: bool, alt: bool):
-        await self.on_key_pressed(keycode=keycode, shift=shift, ctrl=ctrl, alt=alt)
+    async def keypressed(self, keycode: str, shift=False, ctrl=False, alt=False):
+        if self._callback is None:
+            return
 
-    def run_webserver_with_avio(self) -> None:
+        await self._callback.on_key_pressed(
+            keycode=keycode,
+            shift=shift,
+            ctrl=ctrl,
+            alt=alt,
+        )
+
+    def start_webserver_with_avio(self) -> None:
         from uvicorn import run
 
         run(
