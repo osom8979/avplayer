@@ -3,7 +3,7 @@
 from sys import exit as sys_exit
 from typing import Callable, List, Optional
 
-from avplayer.apps.default_app import default_app_main
+from avplayer.apps.default import default_main
 from avplayer.arguments import get_default_arguments
 from avplayer.logging.logging import (
     SEVERITY_NAME_DEBUG,
@@ -48,7 +48,7 @@ def main(
         set_root_level(severity)
 
     logger.debug(f"Parsed arguments: {args}")
-    return default_app_main(args)
+    return default_main(args)
 
 
 if __name__ == "__main__":

@@ -76,11 +76,6 @@ def default_argument_parser() -> ArgumentParser:
         help="FFmpeg command path",
     )
     parser.add_argument(
-        "--ffprobe-path",
-        default="ffprobe",
-        help="FFprobe command path",
-    )
-    parser.add_argument(
         "--logging-step",
         type=int,
         default=DEFAULT_LOGGING_STEP,

@@ -22,7 +22,7 @@ class DefaultApp(AvAppBase, AvInterface):
         return image
 
 
-def default_app_main(args: Namespace) -> int:
+def default_main(args: Namespace) -> int:
     app = DefaultApp(args)
     try:
         app.start_app()

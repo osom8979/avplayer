@@ -21,7 +21,6 @@ class AppBase:
         assert isinstance(args.verbose, int)
         assert isinstance(args.use_uvloop, bool)
         assert isinstance(args.ffmpeg_path, str)
-        assert isinstance(args.ffprobe_path, str)
         assert isinstance(args.logging_step, int)
         assert isinstance(args.bind, str)
         assert isinstance(args.port, int)
@@ -33,7 +32,6 @@ class AppBase:
         self._verbose = args.verbose
         self._use_uvloop = args.use_uvloop
         self._ffmpeg_path = args.ffmpeg_path
-        self._ffprobe_path = args.ffprobe_path
         self._logging_step = args.logging_step
         self._bind = args.bind
         self._port = args.port
@@ -63,10 +61,6 @@ class AppBase:
     @property
     def ffmpeg_path(self) -> str:
         return self._ffmpeg_path
-
-    @property
-    def ffprobe_path(self) -> str:
-        return self._ffprobe_path
 
     @property
     def logging_step(self) -> int:
