@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from argparse import Namespace
 from asyncio import AbstractEventLoop, get_running_loop, run_coroutine_threadsafe
 from asyncio.exceptions import CancelledError
 from concurrent.futures.thread import ThreadPoolExecutor
@@ -13,6 +12,7 @@ from numpy.typing import NDArray
 
 from avplayer.apps.base.av_app_base import AvAppBase
 from avplayer.apps.interface.async_av_interface import AsyncAvInterface
+from avplayer.config import Config
 from avplayer.debug.step_avg import StepAvg
 from avplayer.logging.logging import logger
 from avplayer.variables import VERBOSE_LEVEL_2
@@ -21,22 +21,22 @@ from avplayer.variables import VERBOSE_LEVEL_2
 class AsyncAvAppBase(AvAppBase):
     _callback: Optional[AsyncAvInterface]  # type: ignore[assignment]
 
-    def __init__(self, args: Namespace, callback: Optional[AsyncAvInterface] = None):
-        super().__init__(args, None)
+    def __init__(self, config: Config, callback: Optional[AsyncAvInterface] = None):
+        super().__init__(config, None)
         self._callback = callback
 
         self._async_enqueue_step = StepAvg(
             "AsyncEnqueue",
             logger,
-            self.logging_step,
-            self.verbose,
+            self.config.logging_step,
+            self.config.verbose,
             VERBOSE_LEVEL_2,
         )
         self._async_imgproc_step = StepAvg(
             "AsyncImgproc",
             logger,
-            self.logging_step,
-            self.verbose,
+            self.config.logging_step,
+            self.config.verbose,
             VERBOSE_LEVEL_2,
         )
 

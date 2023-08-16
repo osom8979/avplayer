@@ -5,6 +5,15 @@ from functools import lru_cache
 from typing import Final, List, Optional
 
 from avplayer.logging.logging import SEVERITIES, SEVERITY_NAME_INFO
+from avplayer.variables import (
+    DEFAULT_AV_OPEN_TIMEOUT,
+    DEFAULT_AV_READ_TIMEOUT,
+    DEFAULT_HTTP_BIND,
+    DEFAULT_HTTP_PORT,
+    DEFAULT_HTTP_TIMEOUT,
+    DEFAULT_IO_BUFFER_SIZE,
+    DEFAULT_LOGGING_STEP,
+)
 
 PROG: Final[str] = "avplayer"
 DESCRIPTION: Final[str] = "PyAV Media Player"
@@ -23,12 +32,6 @@ Examples:
     {PROG} -c -d -vv -o rtsp://localhost:8554/live rtsp://localhost:9999/live.sdp
     ffplay rtsp://localhost:8554/live
 """
-
-DEFAULT_SEVERITY: Final[str] = SEVERITY_NAME_INFO
-DEFAULT_BIND: Final[str] = "0.0.0.0"
-DEFAULT_PORT: Final[int] = 8080
-DEFAULT_TIMEOUT: Final[float] = 8.0
-DEFAULT_LOGGING_STEP: Final[int] = 1000
 
 
 @lru_cache
@@ -85,8 +88,8 @@ def default_argument_parser() -> ArgumentParser:
     parser.add_argument(
         "--severity",
         choices=SEVERITIES,
-        default=DEFAULT_SEVERITY,
-        help=f"Logging severity (default: '{DEFAULT_SEVERITY}')",
+        default=SEVERITY_NAME_INFO,
+        help=f"Logging severity (default: '{SEVERITY_NAME_INFO}')",
     )
     parser.add_argument(
         "--debug",
@@ -112,24 +115,24 @@ def default_argument_parser() -> ArgumentParser:
     parser.add_argument(
         "--bind",
         "-b",
-        default=DEFAULT_BIND,
+        default=DEFAULT_HTTP_BIND,
         metavar="bind",
-        help=f"Bind address (default: '{DEFAULT_BIND}')",
+        help=f"Bind address (default: '{DEFAULT_HTTP_BIND}')",
     )
     parser.add_argument(
         "--port",
         "-p",
         type=int,
-        default=DEFAULT_PORT,
+        default=DEFAULT_HTTP_PORT,
         metavar="port",
-        help=f"Port number (default: '{DEFAULT_PORT}')",
+        help=f"Port number (default: '{DEFAULT_HTTP_PORT}')",
     )
     parser.add_argument(
         "--timeout",
         "-t",
-        default=DEFAULT_TIMEOUT,
+        default=DEFAULT_HTTP_TIMEOUT,
         type=float,
-        help=f"Request timeout in seconds (default: {DEFAULT_TIMEOUT})",
+        help=f"Request timeout in seconds (default: {DEFAULT_HTTP_TIMEOUT})",
     )
 
     parser.add_argument(
@@ -145,6 +148,28 @@ def default_argument_parser() -> ArgumentParser:
         default=None,
         metavar="WxH",
         help="Destination Size",
+    )
+
+    parser.add_argument(
+        "--timeout-open",
+        default=DEFAULT_AV_OPEN_TIMEOUT,
+        metavar="sec",
+        type=float,
+        help=f"AV IO open timeout seconds (default: {DEFAULT_AV_OPEN_TIMEOUT}s)",
+    )
+    parser.add_argument(
+        "--timeout-read",
+        default=DEFAULT_AV_READ_TIMEOUT,
+        metavar="sec",
+        type=float,
+        help=f"AV IO read timeout seconds (default: {DEFAULT_AV_READ_TIMEOUT}s)",
+    )
+    parser.add_argument(
+        "--buffer-size",
+        type=int,
+        default=DEFAULT_IO_BUFFER_SIZE,
+        metavar="bytes",
+        help=f"AV IO buffer size (default: {DEFAULT_IO_BUFFER_SIZE}bytes)",
     )
 
     parser.add_argument(

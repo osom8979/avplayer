@@ -10,12 +10,13 @@ from overrides import override
 
 from avplayer.apps.base.av_app_base import AvAppBase
 from avplayer.apps.interface.av_interface import AvInterface
+from avplayer.config import Config
 from avplayer.logging.logging import logger
 
 
 class DefaultApp(AvAppBase, AvInterface):
-    def __init__(self, args: Namespace):
-        super().__init__(args, self)
+    def __init__(self, config: Config):
+        super().__init__(config, self)
 
     @override
     def on_image(self, image: NDArray[uint8]) -> Optional[NDArray[uint8]]:
@@ -23,7 +24,7 @@ class DefaultApp(AvAppBase, AvInterface):
 
 
 def default_main(args: Namespace) -> int:
-    app = DefaultApp(args)
+    app = DefaultApp(Config.from_namespace(args))
     try:
         app.start_app()
     except CancelledError:

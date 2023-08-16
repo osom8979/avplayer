@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from argparse import Namespace
 from asyncio import Task, create_task
 from contextlib import asynccontextmanager
 from typing import Optional
 
 from avplayer.apps.base.async_av_app_base import AsyncAvAppBase
 from avplayer.apps.interface.async_av_interface import AsyncAvWebInterface
+from avplayer.config import Config
 from avplayer.logging.logging import logger
 
 
@@ -14,8 +14,8 @@ class AsyncAvWebAppBase(AsyncAvAppBase):
     _callback: Optional[AsyncAvWebInterface]  # type: ignore[assignment]
     _avio_task: Optional[Task[None]]
 
-    def __init__(self, args: Namespace, callback: Optional[AsyncAvWebInterface] = None):
-        super().__init__(args, None)
+    def __init__(self, config: Config, callback: Optional[AsyncAvWebInterface] = None):
+        super().__init__(config, None)
         self._callback = callback
 
         from fastapi import APIRouter, FastAPI
@@ -80,8 +80,8 @@ class AsyncAvWebAppBase(AsyncAvAppBase):
 
         run(
             self._app,
-            host=self.bind,
-            port=self.port,
+            host=self.config.bind,
+            port=self.config.port,
             lifespan="on",
             log_level=logger.level,
         )
