@@ -2,9 +2,13 @@
 
 from argparse import Namespace
 from copy import deepcopy
-from typing import Optional, Tuple
+from enum import Enum, auto, unique
+from typing import List, Optional, Tuple
 
+from avplayer.logging.logging import logger
 from avplayer.variables import (
+    AIO_APP,
+    AIOWEB_APP,
     DEFAULT_AV_OPEN_TIMEOUT,
     DEFAULT_AV_READ_TIMEOUT,
     DEFAULT_HTTP_BIND,
@@ -12,8 +16,16 @@ from avplayer.variables import (
     DEFAULT_HTTP_TIMEOUT,
     DEFAULT_IO_BUFFER_SIZE,
     DEFAULT_LOGGING_STEP,
+    IO_APP,
     PRINTER_NAMESPACE_ATTR_KEY,
 )
+
+
+@unique
+class AppType(Enum):
+    IO = auto()
+    AIO = auto()
+    AIOWEB = auto()
 
 
 class Config:
@@ -33,6 +45,7 @@ class Config:
         printer=print,
         logging_step=DEFAULT_LOGGING_STEP,
         use_uvloop=False,
+        app_type=AppType.IO,
         debug=False,
         verbose=0,
         *,
@@ -52,6 +65,7 @@ class Config:
         self._printer = printer
         self._logging_step = logging_step
         self._use_uvloop = use_uvloop
+        self._app_type = app_type
         self._debug = debug
         self._verbose = verbose
         self._args = deepcopy(args) if args is not None else Namespace()
@@ -66,11 +80,23 @@ class Config:
         except:  # noqa
             return None
 
+    @staticmethod
+    def get_app_type(choice: str) -> AppType:
+        if choice == IO_APP:
+            return AppType.IO
+        elif choice == AIO_APP:
+            return AppType.AIO
+        elif choice == AIOWEB_APP:
+            return AppType.AIOWEB
+        else:
+            raise NotImplementedError
+
     @classmethod
     def from_namespace(cls, args: Namespace):
         assert isinstance(args.debug, bool)
         assert isinstance(args.verbose, int)
         assert isinstance(args.use_uvloop, bool)
+        assert isinstance(args.app_type, str)
         assert isinstance(args.ffmpeg_path, str)
         assert isinstance(args.logging_step, int)
         assert isinstance(args.bind, str)
@@ -87,6 +113,7 @@ class Config:
         debug = args.debug
         verbose = args.verbose
         use_uvloop = args.use_uvloop
+        app_type = cls.get_app_type(args.app_type)
         ffmpeg_path = args.ffmpeg_path
         logging_step = args.logging_step
         bind = args.bind
@@ -118,6 +145,7 @@ class Config:
             printer=printer,
             logging_step=logging_step,
             use_uvloop=use_uvloop,
+            app_type=app_type,
             debug=debug,
             verbose=verbose,
             args=args,
@@ -138,6 +166,22 @@ class Config:
     @property
     def use_uvloop(self) -> bool:
         return self._use_uvloop
+
+    @property
+    def app_type(self) -> AppType:
+        return self._app_type
+
+    @property
+    def is_io(self) -> bool:
+        return self._app_type == AppType.IO
+
+    @property
+    def is_aio(self) -> bool:
+        return self._app_type == AppType.AIO
+
+    @property
+    def is_aioweb(self) -> bool:
+        return self._app_type == AppType.AIOWEB
 
     @property
     def ffmpeg_path(self) -> str:
@@ -189,3 +233,27 @@ class Config:
 
     def print(self, *args, **kwargs) -> None:
         self._printer(*args, **kwargs)
+
+    def as_logging_lines(self) -> List[str]:
+        return [
+            f"Input file: '{self._input_file}'",
+            f"Output file: '{self._output_file}'",
+            f"Input size: {self._input_size}",
+            f"Output size: {self._output_size}",
+            f"Web bind: '{self._bind}'",
+            f"Web port number: {self._port}",
+            f"Web timeout: {self._timeout:.3f}s",
+            f"AV IO open timeout: {self._timeout_open:.3f}s",
+            f"AV IO read timeout: {self._timeout_read:.3f}s",
+            f"Buffer size: {self._buffer_size} bytes",
+            f"FFmpeg path: '{self._ffmpeg_path}'",
+            f"Logging step: {self._logging_step}",
+            f"Use uvloop: {self._use_uvloop}",
+            f"App type: '{self._app_type.name}'",
+            f"Debug: {self._debug}",
+            f"Verbose: {self._verbose}",
+        ]
+
+    def logging_params(self) -> None:
+        for line in self.as_logging_lines():
+            logger.info(line)

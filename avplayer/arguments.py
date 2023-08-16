@@ -6,6 +6,8 @@ from typing import Final, List, Optional
 
 from avplayer.logging.logging import SEVERITIES, SEVERITY_NAME_INFO
 from avplayer.variables import (
+    APP_TYPES,
+    DEFAULT_APP,
     DEFAULT_AV_OPEN_TIMEOUT,
     DEFAULT_AV_READ_TIMEOUT,
     DEFAULT_HTTP_BIND,
@@ -71,6 +73,12 @@ def default_argument_parser() -> ArgumentParser:
         action="store_true",
         default=False,
         help="Replace the event loop with uvloop",
+    )
+    parser.add_argument(
+        "--app-type",
+        choices=APP_TYPES,
+        default=DEFAULT_APP,
+        help=f"Select app type (default: '{DEFAULT_APP}')",
     )
 
     parser.add_argument(
@@ -139,15 +147,15 @@ def default_argument_parser() -> ArgumentParser:
         "--input-size",
         "-is",
         default=None,
-        metavar="WxH",
-        help="Source Size",
+        metavar="{w}x{h}",
+        help="Image size to pass to callback after decoding",
     )
     parser.add_argument(
         "--output-size",
         "-os",
         default=None,
-        metavar="WxH",
-        help="Destination Size",
+        metavar="{w}x{h}",
+        help="Size of image to encode",
     )
 
     parser.add_argument(
@@ -169,7 +177,7 @@ def default_argument_parser() -> ArgumentParser:
         type=int,
         default=DEFAULT_IO_BUFFER_SIZE,
         metavar="bytes",
-        help=f"AV IO buffer size (default: {DEFAULT_IO_BUFFER_SIZE}bytes)",
+        help=f"AV IO buffer size (default: {DEFAULT_IO_BUFFER_SIZE} bytes)",
     )
 
     parser.add_argument(
