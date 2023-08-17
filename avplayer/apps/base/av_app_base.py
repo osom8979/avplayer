@@ -4,6 +4,7 @@ from typing import Optional
 
 from numpy import uint8
 from numpy.typing import NDArray
+from overrides import override
 
 from avplayer.apps.base.app_base import AppBase
 from avplayer.apps.interface.av_interface import AvInterface
@@ -36,27 +37,16 @@ class AvAppBase(AppBase):
     def avio(self):
         return self._avio
 
-    def shutdown_avio(self):
-        self._avio.shutdown()
-
-    def open_avio(self):
-        self._avio.open()
-
-    def close_avio(self):
-        self._avio.close()
-
-    def run_avio(self, coro) -> None:
-        self._avio.run(coro)
-
     def _callback_image(self, image: NDArray[uint8]) -> Optional[NDArray[uint8]]:
         if self._callback is not None:
             return self._callback.on_image(image)
         else:
             return image
 
-    def start_app(self):
-        self.open_avio()
+    @override
+    def start(self) -> None:
+        self._avio.open()
         try:
-            self.run_avio(self._callback_image)
+            self._avio.run(self._callback_image)
         finally:
-            self.close_avio()
+            self._avio.close()

@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+from abc import ABCMeta, abstractmethod
+
+from overrides import override
+
 from avplayer.config import Config
 from avplayer.ffmpeg.ffmpeg import (
     AUTOMATIC_DETECT_FILE_FORMAT,
@@ -10,7 +14,13 @@ from avplayer.ffmpeg.ffmpeg import (
 )
 
 
-class AppBase:
+class AppInterface(metaclass=ABCMeta):
+    @abstractmethod
+    def start(self) -> None:
+        raise NotImplementedError
+
+
+class AppBase(AppInterface):
     def __init__(self, config: Config):
         self._config = config
 
@@ -37,3 +47,7 @@ class AppBase:
         except:  # noqa
             pass
         return AUTOMATIC_DETECT_FILE_FORMAT
+
+    @override
+    def start(self) -> None:
+        raise NotImplementedError

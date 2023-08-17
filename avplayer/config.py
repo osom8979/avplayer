@@ -172,18 +172,6 @@ class Config:
         return self._app_type
 
     @property
-    def is_io(self) -> bool:
-        return self._app_type == AppType.IO
-
-    @property
-    def is_aio(self) -> bool:
-        return self._app_type == AppType.AIO
-
-    @property
-    def is_aioweb(self) -> bool:
-        return self._app_type == AppType.AIOWEB
-
-    @property
     def ffmpeg_path(self) -> str:
         return self._ffmpeg_path
 

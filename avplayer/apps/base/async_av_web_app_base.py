@@ -4,6 +4,8 @@ from asyncio import Task, create_task
 from contextlib import asynccontextmanager
 from typing import Optional
 
+from overrides import override
+
 from avplayer.apps.base.async_av_app_base import AsyncAvAppBase
 from avplayer.apps.interface.async_av_interface import AsyncAvWebInterface
 from avplayer.config import Config
@@ -44,11 +46,11 @@ class AsyncAvWebAppBase(AsyncAvAppBase):
     async def _lifespan(self, app):
         assert self._app == app
         assert self._avio_task is None
-        self._avio_task = create_task(self.start_async_app(), name="avio")
+        self._avio_task = create_task(self._start_until_thread_complete(), name="avio")
 
         yield
 
-        self.shutdown_avio()
+        self._avio.shutdown()
 
         assert self._avio_task is not None
         await self._avio_task
@@ -79,6 +81,18 @@ class AsyncAvWebAppBase(AsyncAvAppBase):
         from uvicorn import run
 
         run(
+            self._app,
+            host=self.config.bind,
+            port=self.config.port,
+            lifespan="on",
+            log_level=logger.level,
+        )
+
+    @override
+    def start(self) -> None:
+        from uvicorn import run as uvicorn_run
+
+        uvicorn_run(
             self._app,
             host=self.config.bind,
             port=self.config.port,

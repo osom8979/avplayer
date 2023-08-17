@@ -9,7 +9,7 @@ from numpy import uint8
 from numpy.typing import NDArray
 from overrides import override
 
-from avplayer.aio.run import aio_run
+from avplayer.apps.base.app_base import AppInterface
 from avplayer.apps.base.async_av_app_base import AsyncAvAppBase
 from avplayer.apps.base.async_av_web_app_base import AsyncAvWebAppBase
 from avplayer.apps.base.av_app_base import AvAppBase
@@ -18,7 +18,7 @@ from avplayer.apps.interface.async_av_interface import (
     AsyncAvWebInterface,
 )
 from avplayer.apps.interface.av_interface import AvInterface
-from avplayer.config import Config
+from avplayer.config import AppType, Config
 from avplayer.logging.logging import logger
 
 
@@ -82,19 +82,22 @@ class AioWebApp(AsyncAvWebAppBase, AsyncAvWebInterface):
             self._keydown(keycode, shift, ctrl, alt)
 
 
-def default_main(args: Namespace, coro=None, keydown=None) -> int:
-    config = Config.from_namespace(args)
-    config.logging_params()
+def create_app(config: Config, coro=None, keydown=None) -> AppInterface:
+    app_type = config.app_type
+    if app_type == AppType.IO:
+        return IoApp(config, coro)
+    elif app_type == AppType.AIO:
+        return AioApp(config, coro)
+    elif app_type == AppType.AIOWEB:
+        return AioWebApp(config, coro, keydown)
+    else:
+        raise ValueError(f"Unknown app type: {app_type}")
 
+
+def default_main_with_config(config: Config, coro=None, keydown=None) -> int:
+    app = create_app(config, coro, keydown)
     try:
-        if config.is_io:
-            IoApp(config, coro).start_app()
-        elif config.is_aio:
-            aio_run(AioApp(config, coro).start_async_app())
-        elif config.is_aioweb:
-            AioWebApp(config, coro, keydown).start_webserver_with_avio()
-        else:
-            raise NotImplementedError
+        app.start()
     except CancelledError:
         logger.debug("An cancelled signal was detected")
         return 0
@@ -109,3 +112,9 @@ def default_main(args: Namespace, coro=None, keydown=None) -> int:
         return 1
     else:
         return 0
+
+
+def default_main(args: Namespace, coro=None, keydown=None) -> int:
+    config = Config.from_namespace(args)
+    config.logging_params()
+    return default_main_with_config(config, coro, keydown)

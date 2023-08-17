@@ -9,7 +9,9 @@ from typing import Optional
 
 from numpy import uint8
 from numpy.typing import NDArray
+from overrides import override
 
+from avplayer.aio.run import aio_run
 from avplayer.apps.base.av_app_base import AvAppBase
 from avplayer.apps.interface.async_av_interface import AsyncAvInterface
 from avplayer.config import Config
@@ -62,22 +64,26 @@ class AsyncAvAppBase(AvAppBase):
     ) -> None:
         run_coroutine_threadsafe(self._call_async_image(image, datetime.now()), loop)
 
-    async def start_async_app(self) -> None:
+    async def _start_until_thread_complete(self) -> None:
         executor = ThreadPoolExecutor(max_workers=1)
-        self.open_avio()
+        self._avio.open()
         try:
             loop = get_running_loop()
             await loop.run_in_executor(
                 executor,
-                self.run_avio,
+                self._avio.run,
                 partial(self._enqueue_on_image_coroutine, loop),
             )
         except CancelledError:
             logger.warning("An cancelled signal was detected")
             logger.warning("Enable streamer shutdown flag")
-            self.shutdown_avio()
+            self._avio.shutdown()
 
             logger.warning("Wait for the executor to exit ...")
             executor.shutdown(wait=True)
         finally:
-            self.close_avio()
+            self._avio.close()
+
+    @override
+    def start(self) -> None:
+        aio_run(self._start_until_thread_complete(), self.config.use_uvloop)
