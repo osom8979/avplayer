@@ -13,8 +13,8 @@ from overrides import override
 
 from avplayer.aio.run import aio_run
 from avplayer.apps.base.av_app_base import AvAppBase
-from avplayer.apps.interface.async_av_interface import AsyncAvInterface
-from avplayer.config import Config
+from avplayer.apps.interface.av_interface import AsyncAvInterface
+from avplayer.avconfig import AvConfig
 from avplayer.debug.step_avg import StepAvg
 from avplayer.logging.logging import logger
 from avplayer.variables import VERBOSE_LEVEL_2
@@ -23,7 +23,7 @@ from avplayer.variables import VERBOSE_LEVEL_2
 class AsyncAvAppBase(AvAppBase):
     _callback: Optional[AsyncAvInterface]  # type: ignore[assignment]
 
-    def __init__(self, config: Config, callback: Optional[AsyncAvInterface] = None):
+    def __init__(self, config: AvConfig, callback: Optional[AsyncAvInterface] = None):
         super().__init__(config, None)
         self._callback = callback
 

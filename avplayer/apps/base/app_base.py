@@ -4,7 +4,7 @@ from abc import ABCMeta, abstractmethod
 
 from overrides import override
 
-from avplayer.config import Config
+from avplayer.avconfig import AvConfig
 from avplayer.ffmpeg.ffmpeg import (
     AUTOMATIC_DETECT_FILE_FORMAT,
     DEFAULT_FILE_FORMAT,
@@ -21,11 +21,11 @@ class AppInterface(metaclass=ABCMeta):
 
 
 class AppBase(AppInterface):
-    def __init__(self, config: Config):
+    def __init__(self, config: AvConfig):
         self._config = config
 
     @property
-    def config(self) -> Config:
+    def config(self) -> AvConfig:
         return self._config
 
     def inspect_channels(self, pixel_format=DEFAULT_PIXEL_FORMAT) -> int:

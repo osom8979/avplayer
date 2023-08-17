@@ -7,32 +7,37 @@ from typing import Optional
 from overrides import override
 
 from avplayer.apps.base.async_av_app_base import AsyncAvAppBase
-from avplayer.apps.interface.async_av_interface import AsyncAvWebInterface
-from avplayer.config import Config
+from avplayer.apps.interface.av_interface import AsyncAvInterface
+from avplayer.avconfig import AvConfig
 from avplayer.logging.logging import logger
 
 
 class AsyncAvWebAppBase(AsyncAvAppBase):
-    _callback: Optional[AsyncAvWebInterface]  # type: ignore[assignment]
-    _avio_task: Optional[Task[None]]
+    _avtask: Optional[Task[None]]
 
-    def __init__(self, config: Config, callback: Optional[AsyncAvWebInterface] = None):
+    def __init__(
+        self,
+        config: AvConfig,
+        callback: Optional[AsyncAvInterface] = None,
+        router=None,
+    ):
         super().__init__(config, None)
         self._callback = callback
 
         from fastapi import APIRouter, FastAPI
 
-        GET = "GET"  # noqa
-        POST = "POST"  # noqa
-
-        self._router = APIRouter()
-        self._router.add_api_route("/health", self.health, methods=[GET])
-        self._router.add_api_route("/keypressed", self.keypressed, methods=[POST])
+        if router is not None:
+            if not isinstance(router, APIRouter):
+                raise TypeError("The 'router' must be of type fastapi.APIRouter")
+            self._router = router
+        else:
+            self._router = APIRouter()
+            self._router.add_api_route("/", self.health, methods=["GET"])
 
         self._app = FastAPI(lifespan=self._lifespan)
         self._app.include_router(self._router)
 
-        self._avio_task = None
+        self._avtask = None
 
     @property
     def router(self):
@@ -45,57 +50,39 @@ class AsyncAvWebAppBase(AsyncAvAppBase):
     @asynccontextmanager
     async def _lifespan(self, app):
         assert self._app == app
-        assert self._avio_task is None
-        self._avio_task = create_task(self._start_until_thread_complete(), name="avio")
+        assert self._avtask is None
+        self._avtask = create_task(self._start_until_thread_complete(), name="avio")
 
         yield
 
         self._avio.shutdown()
 
-        assert self._avio_task is not None
-        await self._avio_task
-        self._avio_task = None
+        assert self._avtask is not None
+        await self._avtask
+        self._avtask = None
 
     async def health(self):
-        assert self._avio_task is not None
-        avio_task_name = self._avio_task.get_name()
-        avio_task_live = not self._avio_task.done()
-        return {
-            "tasks": {
-                avio_task_name: avio_task_live,
-            }
-        }
-
-    async def keypressed(self, keycode: str, shift=False, ctrl=False, alt=False):
-        if self._callback is None:
-            return
-
-        await self._callback.on_key_pressed(
-            keycode=keycode,
-            shift=shift,
-            ctrl=ctrl,
-            alt=alt,
-        )
-
-    def start_webserver_with_avio(self) -> None:
-        from uvicorn import run
-
-        run(
-            self._app,
-            host=self.config.bind,
-            port=self.config.port,
-            lifespan="on",
-            log_level=logger.level,
-        )
+        assert self._avtask is not None
+        avtask_name = self._avtask.get_name()
+        avtask_live = not self._avtask.done()
+        return {"tasks": {avtask_name: avtask_live}}
 
     @override
     def start(self) -> None:
         from uvicorn import run as uvicorn_run
+        from uvicorn.config import LoopSetupType
+
+        def get_loop_setup_type(use_uvloop: bool) -> LoopSetupType:
+            if use_uvloop:
+                return "uvloop"
+            else:
+                return "asyncio"
 
         uvicorn_run(
             self._app,
             host=self.config.bind,
             port=self.config.port,
+            loop=get_loop_setup_type(self.config.use_uvloop),
             lifespan="on",
             log_level=logger.level,
         )

@@ -9,13 +9,13 @@ from overrides import override
 from avplayer.apps.base.app_base import AppBase
 from avplayer.apps.interface.av_interface import AvInterface
 from avplayer.av.av_io import AvIo
-from avplayer.config import Config
+from avplayer.avconfig import AvConfig
 
 
 class AvAppBase(AppBase):
     _callback: Optional[AvInterface]
 
-    def __init__(self, config: Config, callback: Optional[AvInterface] = None):
+    def __init__(self, config: AvConfig, callback: Optional[AvInterface] = None):
         super().__init__(config)
 
         self._callback = callback

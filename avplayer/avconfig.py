@@ -22,13 +22,13 @@ from avplayer.variables import (
 
 
 @unique
-class AppType(Enum):
+class AvAppType(Enum):
     IO = auto()
     AIO = auto()
     AIOWEB = auto()
 
 
-class Config:
+class AvConfig:
     def __init__(
         self,
         input_file,
@@ -45,7 +45,7 @@ class Config:
         printer=print,
         logging_step=DEFAULT_LOGGING_STEP,
         use_uvloop=False,
-        app_type=AppType.IO,
+        app_type=AvAppType.IO,
         debug=False,
         verbose=0,
         *,
@@ -81,13 +81,13 @@ class Config:
             return None
 
     @staticmethod
-    def get_app_type(choice: str) -> AppType:
+    def get_app_type(choice: str) -> AvAppType:
         if choice == IO_APP:
-            return AppType.IO
+            return AvAppType.IO
         elif choice == AIO_APP:
-            return AppType.AIO
+            return AvAppType.AIO
         elif choice == AIOWEB_APP:
-            return AppType.AIOWEB
+            return AvAppType.AIOWEB
         else:
             raise NotImplementedError
 
@@ -168,7 +168,7 @@ class Config:
         return self._use_uvloop
 
     @property
-    def app_type(self) -> AppType:
+    def app_type(self) -> AvAppType:
         return self._app_type
 
     @property

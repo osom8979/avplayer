@@ -13,17 +13,13 @@ from avplayer.apps.base.app_base import AppInterface
 from avplayer.apps.base.async_av_app_base import AsyncAvAppBase
 from avplayer.apps.base.async_av_web_app_base import AsyncAvWebAppBase
 from avplayer.apps.base.av_app_base import AvAppBase
-from avplayer.apps.interface.async_av_interface import (
-    AsyncAvInterface,
-    AsyncAvWebInterface,
-)
-from avplayer.apps.interface.av_interface import AvInterface
-from avplayer.config import AppType, Config
+from avplayer.apps.interface.av_interface import AsyncAvInterface, AvInterface
+from avplayer.avconfig import AvAppType, AvConfig
 from avplayer.logging.logging import logger
 
 
 class IoApp(AvAppBase, AvInterface):
-    def __init__(self, config: Config, coro=None):
+    def __init__(self, config: AvConfig, coro=None):
         super().__init__(config, self)
         self._coro = coro
 
@@ -36,7 +32,7 @@ class IoApp(AvAppBase, AvInterface):
 
 
 class AioApp(AsyncAvAppBase, AsyncAvInterface):
-    def __init__(self, config: Config, coro=None):
+    def __init__(self, config: AvConfig, coro=None):
         super().__init__(config, self)
         self._is_coroutine = iscoroutinefunction(coro)
         self._coro = coro
@@ -52,13 +48,11 @@ class AioApp(AsyncAvAppBase, AsyncAvInterface):
             return image
 
 
-class AioWebApp(AsyncAvWebAppBase, AsyncAvWebInterface):
-    def __init__(self, config: Config, coro=None, keydown=None):
-        super().__init__(config, self)
+class AioWebApp(AsyncAvWebAppBase, AsyncAvInterface):
+    def __init__(self, config: AvConfig, coro=None, router=None):
+        super().__init__(config, self, router)
         self._is_coroutine = iscoroutinefunction(coro)
         self._coro = coro
-        self._is_coroutine_keydown = iscoroutinefunction(keydown)
-        self._keydown = keydown
 
     @override
     async def on_image(self, image: NDArray[uint8]) -> Optional[NDArray[uint8]]:
@@ -70,32 +64,21 @@ class AioWebApp(AsyncAvWebAppBase, AsyncAvWebInterface):
         else:
             return image
 
-    @override
-    async def on_key_pressed(
-        self, keycode: str, shift: bool, ctrl: bool, alt: bool
-    ) -> None:
-        if self._keydown is None:
-            return
-        if self._is_coroutine_keydown:
-            await self._keydown(keycode, shift, ctrl, alt)
-        else:
-            self._keydown(keycode, shift, ctrl, alt)
 
-
-def create_app(config: Config, coro=None, keydown=None) -> AppInterface:
+def create_app(config: AvConfig, coro=None, router=None) -> AppInterface:
     app_type = config.app_type
-    if app_type == AppType.IO:
+    if app_type == AvAppType.IO:
         return IoApp(config, coro)
-    elif app_type == AppType.AIO:
+    elif app_type == AvAppType.AIO:
         return AioApp(config, coro)
-    elif app_type == AppType.AIOWEB:
-        return AioWebApp(config, coro, keydown)
+    elif app_type == AvAppType.AIOWEB:
+        return AioWebApp(config, coro, router)
     else:
         raise ValueError(f"Unknown app type: {app_type}")
 
 
-def default_main_with_config(config: Config, coro=None, keydown=None) -> int:
-    app = create_app(config, coro, keydown)
+def default_main_with_config(config: AvConfig, coro=None, router=None) -> int:
+    app = create_app(config, coro, router)
     try:
         app.start()
     except CancelledError:
@@ -114,7 +97,7 @@ def default_main_with_config(config: Config, coro=None, keydown=None) -> int:
         return 0
 
 
-def default_main(args: Namespace, coro=None, keydown=None) -> int:
-    config = Config.from_namespace(args)
+def default_main(args: Namespace, coro=None, router=None) -> int:
+    config = AvConfig.from_namespace(args)
     config.logging_params()
-    return default_main_with_config(config, coro, keydown)
+    return default_main_with_config(config, coro, router)
