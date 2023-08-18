@@ -51,7 +51,9 @@ class AsyncAvWebAppBase(AsyncAvAppBase):
     async def _lifespan(self, app):
         assert self._app == app
         assert self._avtask is None
-        self._avtask = create_task(self._start_until_thread_complete(), name="avio")
+        if self._callback:
+            await self._callback.on_open()
+        self._avtask = create_task(self._until_thread_complete(), name="avtask")
 
         yield
 
@@ -60,6 +62,9 @@ class AsyncAvWebAppBase(AsyncAvAppBase):
         assert self._avtask is not None
         await self._avtask
         self._avtask = None
+
+        if self._callback:
+            await self._callback.on_close()
 
     async def health(self):
         assert self._avtask is not None

@@ -43,10 +43,20 @@ class AvAppBase(AppBase):
         else:
             return image
 
-    @override
-    def start(self) -> None:
+    def _avio_main(self) -> None:
         self._avio.open()
         try:
             self._avio.run(self._callback_image)
         finally:
             self._avio.close()
+
+    @override
+    def start(self) -> None:
+        if self._callback:
+            self._callback.on_open()
+            try:
+                self._avio_main()
+            finally:
+                self._callback.on_close()
+        else:
+            self._avio_main()

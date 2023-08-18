@@ -24,6 +24,14 @@ class IoApp(AvAppBase, AvInterface):
         self._coro = coro
 
     @override
+    def on_open(self) -> None:
+        pass
+
+    @override
+    def on_close(self) -> None:
+        pass
+
+    @override
     def on_image(self, image: NDArray[uint8]) -> Optional[NDArray[uint8]]:
         if self._coro is not None:
             return self._coro(image)
@@ -36,6 +44,14 @@ class AioApp(AsyncAvAppBase, AsyncAvInterface):
         super().__init__(config, self)
         self._is_coroutine = iscoroutinefunction(coro)
         self._coro = coro
+
+    @override
+    async def on_open(self) -> None:
+        pass
+
+    @override
+    async def on_close(self) -> None:
+        pass
 
     @override
     async def on_image(self, image: NDArray[uint8]) -> Optional[NDArray[uint8]]:
@@ -53,6 +69,14 @@ class AioWebApp(AsyncAvWebAppBase, AsyncAvInterface):
         super().__init__(config, self, router)
         self._is_coroutine = iscoroutinefunction(coro)
         self._coro = coro
+
+    @override
+    async def on_open(self) -> None:
+        pass
+
+    @override
+    async def on_close(self) -> None:
+        pass
 
     @override
     async def on_image(self, image: NDArray[uint8]) -> Optional[NDArray[uint8]]:

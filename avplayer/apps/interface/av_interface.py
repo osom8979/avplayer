@@ -9,11 +9,27 @@ from numpy.typing import NDArray
 
 class AvInterface(metaclass=ABCMeta):
     @abstractmethod
+    def on_open(self) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def on_close(self) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
     def on_image(self, image: NDArray[uint8]) -> Optional[NDArray[uint8]]:
         raise NotImplementedError
 
 
 class AsyncAvInterface(metaclass=ABCMeta):
+    @abstractmethod
+    async def on_open(self) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def on_close(self) -> None:
+        raise NotImplementedError
+
     @abstractmethod
     async def on_image(self, image: NDArray[uint8]) -> Optional[NDArray[uint8]]:
         raise NotImplementedError

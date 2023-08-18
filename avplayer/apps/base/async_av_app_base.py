@@ -64,7 +64,7 @@ class AsyncAvAppBase(AvAppBase):
     ) -> None:
         run_coroutine_threadsafe(self._call_async_image(image, datetime.now()), loop)
 
-    async def _start_until_thread_complete(self) -> None:
+    async def _until_thread_complete(self) -> None:
         executor = ThreadPoolExecutor(max_workers=1)
         self._avio.open()
         try:
@@ -84,6 +84,19 @@ class AsyncAvAppBase(AvAppBase):
         finally:
             self._avio.close()
 
+    async def _event_context_with_until_thread_complete(self) -> None:
+        if self._callback:
+            await self._callback.on_open()
+            try:
+                await self._until_thread_complete()
+            finally:
+                await self._callback.on_close()
+        else:
+            await self._until_thread_complete()
+
     @override
     def start(self) -> None:
-        aio_run(self._start_until_thread_complete(), self.config.use_uvloop)
+        aio_run(
+            self._event_context_with_until_thread_complete(),
+            self.config.use_uvloop,
+        )
