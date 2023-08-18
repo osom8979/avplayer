@@ -6,7 +6,7 @@ from avplayer.apps.interface.av_interface import AsyncAvInterface, AvInterface
 from avplayer.av.av_io import AvIo
 from avplayer.avconfig import AvConfig
 
-__version__ = "1.4.0"
+__version__ = "1.5.0"
 __all__ = [
     "AioApp",
     "AioWebApp",
