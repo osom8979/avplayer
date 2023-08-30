@@ -3,7 +3,7 @@
 from errno import EAGAIN
 from threading import Event
 from time import sleep
-from typing import Optional, Tuple
+from typing import Final, Optional, Sequence, Tuple
 
 from numpy import uint8
 from numpy.typing import NDArray
@@ -11,6 +11,7 @@ from numpy.typing import NDArray
 from av import AVError, FFmpegError, VideoFrame  # noqa
 from av import open as av_open  # noqa
 from av.container import InputContainer, OutputContainer  # noqa
+from av.error import BrokenPipeError, ConnectionRefusedError  # noqa
 from av.stream import Stream  # noqa
 from avplayer.debug.step_avg import StepAvg
 from avplayer.ffmpeg.ffmpeg import (
@@ -29,6 +30,15 @@ from avplayer.variables import VERBOSE_LEVEL_0 as VL0
 from avplayer.variables import VERBOSE_LEVEL_1 as VL1
 from avplayer.variables import VERBOSE_LEVEL_2 as VL2
 
+BROKEN_PIPE: Final[int] = 32
+CONNECTION_REFUSED: Final[int] = 111
+SKIP_FLUSH_ERRORS: Final[Sequence[int]] = BROKEN_PIPE, CONNECTION_REFUSED
+
+
+class AlreadyLatestException(RuntimeError):
+    def __init__(self):
+        super().__init__("An exception has already been specified")
+
 
 class AvIo:
     _input_container: InputContainer
@@ -36,6 +46,8 @@ class AvIo:
 
     _output_container: Optional[OutputContainer]
     _output_stream: Optional[Stream]
+
+    _latest_exception: Optional[BaseException]
 
     def __init__(
         self,
@@ -69,6 +81,7 @@ class AvIo:
             "preset": PRESET_ULTRAFAST,
             "crf": str(CRF_SANE_RANGE_MAX),
         }
+        self._latest_exception = None
 
         self._buffer_size = buffer_size
         self._timeout = open_timeout, read_timeout
@@ -102,6 +115,24 @@ class AvIo:
     @property
     def verbose(self) -> int:
         return self._verbose
+
+    @property
+    def skip_flush(self) -> bool:
+        if self._latest_exception is None:
+            return False
+
+        if not isinstance(self._latest_exception, AVError):
+            return False
+
+        return getattr(self._latest_exception, "errno") in SKIP_FLUSH_ERRORS
+
+    @property
+    def latest_exception(self):
+        return self._latest_exception
+
+    @latest_exception.setter
+    def latest_exception(self, e: BaseException) -> None:
+        self._latest_exception = e
 
     def shutdown(self) -> None:
         return self._done.set()
@@ -185,7 +216,13 @@ class AvIo:
         self._input_container.close()
         if self._output_container:
             assert self._output_stream is not None
-            self._output_container.mux(self._output_stream.encode(None))
+
+            try:
+                if not self.skip_flush:
+                    self._output_container.mux(self._output_stream.encode(None))
+            except BaseException as e:  # noqa
+                logger.warning(f"Flush error: {e}")
+
             self._output_container.close()
         logger.info("The I/O container was successfully closed")
 
@@ -268,14 +305,25 @@ class AvIo:
         try:
             logger.info("Start streaming ...")
             while True:
+                if self._latest_exception is not None:
+                    raise AlreadyLatestException from self._latest_exception
+
                 if self._done.is_set():
                     raise InterruptedError
 
                 with self._iter_step:
                     self.iter(coro)
         except AVError as e:
-            logger.exception(e)
-            raise
+            self._latest_exception = e
+            logger.error(f"AV error: {e}")
+        except BrokenPipeError as e:
+            self._latest_exception = e
+            logger.error(f"Broken pipe error: {e}")
+        except ConnectionRefusedError as e:
+            self._latest_exception = e
+            logger.error(f"Connection refused error: {e}")
+        except AlreadyLatestException as e:
+            logger.error(f"Already latest exception: {e}")
         except StopIteration as e:
             logger.warning(f"Stop iteration: {e}")
         except InterruptedError as e:

@@ -53,9 +53,14 @@ class AsyncAvAppBase(AvAppBase):
             else:
                 next_image = image
         except BaseException as e:
-            logger.exception(e)
+            self._avio.latest_exception = e
+            return
         else:
-            self.avio.send(next_image)
+            try:
+                self.avio.send(next_image)
+            except BaseException as e:
+                self._avio.latest_exception = e
+                return
         finally:
             self._async_imgproc_step.do_exit()
 
@@ -65,8 +70,9 @@ class AsyncAvAppBase(AvAppBase):
         run_coroutine_threadsafe(self._call_async_image(image, datetime.now()), loop)
 
     async def _until_thread_complete(self) -> None:
-        executor = ThreadPoolExecutor(max_workers=1)
         self._avio.open()
+
+        executor = ThreadPoolExecutor(max_workers=1)
         try:
             loop = get_running_loop()
             await loop.run_in_executor(
