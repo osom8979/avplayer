@@ -2,3 +2,4 @@ av
 coloredlogs
 numpy
 overrides
+pillow

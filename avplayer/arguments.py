@@ -15,6 +15,9 @@ from avplayer.variables import (
     DEFAULT_HTTP_TIMEOUT,
     DEFAULT_IO_BUFFER_SIZE,
     DEFAULT_LOGGING_STEP,
+    DEFAULT_WIN_FPS,
+    DEFAULT_WIN_GEOMETRY,
+    DEFAULT_WIN_TITLE,
 )
 
 PROG: Final[str] = "avplayer"
@@ -178,6 +181,24 @@ def default_argument_parser() -> ArgumentParser:
         default=DEFAULT_IO_BUFFER_SIZE,
         metavar="bytes",
         help=f"AV IO buffer size (default: {DEFAULT_IO_BUFFER_SIZE} bytes)",
+    )
+
+    parser.add_argument(
+        "--win-geometry",
+        default=DEFAULT_WIN_GEOMETRY,
+        metavar="{w}x{h}+{x}+{y}",
+        help=f"Tk window geometry (default: '{DEFAULT_WIN_GEOMETRY}')",
+    )
+    parser.add_argument(
+        "--win-title",
+        default=DEFAULT_WIN_TITLE,
+        help=f"Tk window title (default: '{DEFAULT_WIN_TITLE}')",
+    )
+    parser.add_argument(
+        "--win-fps",
+        type=int,
+        default=DEFAULT_WIN_FPS,
+        help=f"Tk window title (default: {DEFAULT_WIN_FPS})",
     )
 
     parser.add_argument(

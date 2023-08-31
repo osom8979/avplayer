@@ -48,7 +48,7 @@ class AsyncAvApp(AvApp):
 
         self._async_imgproc_step.do_enter()
         try:
-            if self._callback is not None:
+            if self._callback:
                 next_image = await self._callback.on_image(image)
             else:
                 next_image = image
@@ -69,7 +69,7 @@ class AsyncAvApp(AvApp):
     ) -> None:
         run_coroutine_threadsafe(self._call_async_image(image, datetime.now()), loop)
 
-    async def _until_thread_complete_with_run(self) -> None:
+    async def _run_avio(self) -> None:
         executor = ThreadPoolExecutor(max_workers=1)
         try:
             loop = get_running_loop()
@@ -88,26 +88,23 @@ class AsyncAvApp(AvApp):
             executor.shutdown(wait=True)
             logger.debug("Executor has terminated")
 
-    async def _until_complete(self) -> None:
+    async def _until_avio_complete(self) -> None:
         self._avio.open()
         try:
-            await self._until_thread_complete_with_run()
+            await self._run_avio()
         finally:
             self._avio.close()
 
-    async def _event_context_with_until_thread_complete(self) -> None:
+    async def _until_complete(self) -> None:
         if self._callback:
             await self._callback.on_open()
             try:
-                await self._until_complete()
+                await self._until_avio_complete()
             finally:
                 await self._callback.on_close()
         else:
-            await self._until_complete()
+            await self._until_avio_complete()
 
     @override
     def start(self) -> None:
-        aio_run(
-            self._event_context_with_until_thread_complete(),
-            self.config.use_uvloop,
-        )
+        aio_run(self._until_complete(), self.config.use_uvloop)

@@ -64,6 +64,10 @@ DEFAULT_HTTP_PORT: Final[int] = 8080
 DEFAULT_HTTP_TIMEOUT: Final[float] = 8.0
 DEFAULT_LOGGING_STEP: Final[int] = 1000
 
+DEFAULT_WIN_GEOMETRY: Final[str] = "640x360+0+0"
+DEFAULT_WIN_TITLE: Final[str] = "AvPlayer"
+DEFAULT_WIN_FPS: Final[int] = 60
+
 IO_APP: Final[str] = "io"
 AIO_APP: Final[str] = "aio"
 AIOTK_APP: Final[str] = "aiotk"

@@ -3,6 +3,7 @@
 from argparse import Namespace
 from copy import deepcopy
 from enum import Enum, auto, unique
+from re import split as re_split
 from typing import List, Optional, Tuple
 
 from avplayer.logging.logging import logger
@@ -15,7 +16,11 @@ from avplayer.variables import (
     DEFAULT_HTTP_TIMEOUT,
     DEFAULT_IO_BUFFER_SIZE,
     DEFAULT_LOGGING_STEP,
+    DEFAULT_WIN_GEOMETRY,
+    DEFAULT_WIN_TITLE,
+    DEFAULT_WIN_FPS,
     IO_APP,
+    AIOTK_APP,
     PRINTER_NAMESPACE_ATTR_KEY,
 )
 
@@ -45,6 +50,9 @@ class AvConfig:
         logging_step=DEFAULT_LOGGING_STEP,
         use_uvloop=False,
         app_type=AvAppType.IO,
+        win_geometry=DEFAULT_WIN_GEOMETRY,
+        win_title=DEFAULT_WIN_TITLE,
+        win_fps=DEFAULT_WIN_FPS,
         debug=False,
         verbose=0,
         *,
@@ -65,6 +73,9 @@ class AvConfig:
         self._logging_step = logging_step
         self._use_uvloop = use_uvloop
         self._app_type = app_type
+        self._win_geometry = win_geometry
+        self._win_title = win_title
+        self._win_fps = win_fps
         self._debug = debug
         self._verbose = verbose
         self._args = deepcopy(args) if args is not None else Namespace()
@@ -85,6 +96,8 @@ class AvConfig:
             return AvAppType.IO
         elif choice == AIO_APP:
             return AvAppType.AIO
+        elif choice == AIOTK_APP:
+            return AvAppType.AIOTK
         else:
             raise NotImplementedError
 
@@ -106,6 +119,9 @@ class AvConfig:
         assert isinstance(args.timeout_open, float)
         assert isinstance(args.timeout_read, float)
         assert isinstance(args.buffer_size, int)
+        assert isinstance(args.win_geometry, str)
+        assert isinstance(args.win_title, str)
+        assert isinstance(args.win_fps, int)
 
         debug = args.debug
         verbose = args.verbose
@@ -123,6 +139,9 @@ class AvConfig:
         timeout_open = args.timeout_open
         timeout_read = args.timeout_read
         buffer_size = args.buffer_size
+        win_geometry = args.win_geometry
+        win_title = args.win_title
+        win_fps = args.win_fps
 
         assert hasattr(args, PRINTER_NAMESPACE_ATTR_KEY)
         printer = getattr(args, PRINTER_NAMESPACE_ATTR_KEY)
@@ -143,6 +162,9 @@ class AvConfig:
             logging_step=logging_step,
             use_uvloop=use_uvloop,
             app_type=app_type,
+            win_geometry=win_geometry,
+            win_title=win_title,
+            win_fps=win_fps,
             debug=debug,
             verbose=verbose,
             args=args,
@@ -216,6 +238,23 @@ class AvConfig:
     def output_size(self) -> Optional[Tuple[int, int]]:
         return self._output_size
 
+    @property
+    def win_geometry(self) -> str:
+        return self._win_geometry
+
+    @property
+    def tk_geometry(self) -> Tuple[int, int, int, int]:
+        w, h, x, y = re_split(r"x|\+", self._win_geometry)
+        return int(w), int(h), int(x), int(y)
+
+    @property
+    def win_title(self) -> str:
+        return self._win_title
+
+    @property
+    def win_fps(self) -> int:
+        return self._win_fps
+
     def print(self, *args, **kwargs) -> None:
         self._printer(*args, **kwargs)
 
@@ -235,6 +274,9 @@ class AvConfig:
             f"Logging step: {self._logging_step}",
             f"Use uvloop: {self._use_uvloop}",
             f"App type: '{self._app_type.name}'",
+            f"Win geometry: '{self._win_geometry}'",
+            f"Win title: '{self._win_title}'",
+            f"Win fps: {self._win_fps:.2f}",
             f"Debug: {self._debug}",
             f"Verbose: {self._verbose}",
         ]
