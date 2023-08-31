@@ -11,7 +11,6 @@ from overrides import override
 
 from avplayer.apps.base.app_base import AppInterface
 from avplayer.apps.base.async_av_app_base import AsyncAvAppBase
-from avplayer.apps.base.async_av_web_app_base import AsyncAvWebAppBase
 from avplayer.apps.base.av_app_base import AvAppBase
 from avplayer.apps.interface.av_interface import AsyncAvInterface, AvInterface
 from avplayer.avconfig import AvAppType, AvConfig
@@ -64,45 +63,18 @@ class AioApp(AsyncAvAppBase, AsyncAvInterface):
             return image
 
 
-class AioWebApp(AsyncAvWebAppBase, AsyncAvInterface):
-    def __init__(self, config: AvConfig, coro=None, router=None):
-        super().__init__(config, self, router)
-        self._is_coroutine = iscoroutinefunction(coro)
-        self._coro = coro
-
-    @override
-    async def on_open(self) -> None:
-        pass
-
-    @override
-    async def on_close(self) -> None:
-        pass
-
-    @override
-    async def on_image(self, image: NDArray[uint8]) -> Optional[NDArray[uint8]]:
-        if self._coro is not None:
-            if self._is_coroutine:
-                return await self._coro(image)
-            else:
-                return self._coro(image)
-        else:
-            return image
-
-
-def create_app(config: AvConfig, coro=None, router=None) -> AppInterface:
+def create_app(config: AvConfig, coro=None) -> AppInterface:
     app_type = config.app_type
     if app_type == AvAppType.IO:
         return IoApp(config, coro)
     elif app_type == AvAppType.AIO:
         return AioApp(config, coro)
-    elif app_type == AvAppType.AIOWEB:
-        return AioWebApp(config, coro, router)
     else:
         raise ValueError(f"Unknown app type: {app_type}")
 
 
-def default_main_with_config(config: AvConfig, coro=None, router=None) -> int:
-    app = create_app(config, coro, router)
+def default_main_with_config(config: AvConfig, coro=None) -> int:
+    app = create_app(config, coro)
     try:
         app.start()
     except CancelledError:
@@ -121,7 +93,7 @@ def default_main_with_config(config: AvConfig, coro=None, router=None) -> int:
         return 0
 
 
-def default_main(args: Namespace, coro=None, router=None) -> int:
+def default_main(args: Namespace, coro=None) -> int:
     config = AvConfig.from_namespace(args)
     config.logging_params()
-    return default_main_with_config(config, coro, router)
+    return default_main_with_config(config, coro)

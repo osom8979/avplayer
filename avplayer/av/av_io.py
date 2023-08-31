@@ -236,8 +236,11 @@ class AvIo:
 
                     # We need to skip the "flushing" packets that `demux` generates.
                     if packet.dts is None:
-                        logger.warning("Skip the flushing packet")
                         self._flush_down_count += 1
+                        logger.warning(
+                            "Skip the flushing packet, shutdown count: "
+                            f"{self._flush_down_count}/{self._flush_down_threshold}"
+                        )
                         if self._flush_down_count >= self._flush_down_threshold:
                             raise EOFError("The flush count has reached its maximum")
                         continue

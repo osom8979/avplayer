@@ -69,9 +69,7 @@ class AsyncAvAppBase(AvAppBase):
     ) -> None:
         run_coroutine_threadsafe(self._call_async_image(image, datetime.now()), loop)
 
-    async def _until_thread_complete(self) -> None:
-        self._avio.open()
-
+    async def _until_thread_complete_with_run(self) -> None:
         executor = ThreadPoolExecutor(max_workers=1)
         try:
             loop = get_running_loop()
@@ -82,11 +80,18 @@ class AsyncAvAppBase(AvAppBase):
             )
         except CancelledError:
             logger.warning("An cancelled signal was detected")
-            logger.warning("Enable streamer shutdown flag")
+        finally:
+            logger.debug("Enable streamer shutdown flag")
             self._avio.shutdown()
 
-            logger.warning("Wait for the executor to exit ...")
+            logger.debug("Wait for the executor to exit ...")
             executor.shutdown(wait=True)
+            logger.debug("Executor has terminated")
+
+    async def _until_complete(self) -> None:
+        self._avio.open()
+        try:
+            await self._until_thread_complete_with_run()
         finally:
             self._avio.close()
 
@@ -94,11 +99,11 @@ class AsyncAvAppBase(AvAppBase):
         if self._callback:
             await self._callback.on_open()
             try:
-                await self._until_thread_complete()
+                await self._until_complete()
             finally:
                 await self._callback.on_close()
         else:
-            await self._until_thread_complete()
+            await self._until_complete()
 
     @override
     def start(self) -> None:

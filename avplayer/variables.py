@@ -66,6 +66,5 @@ DEFAULT_LOGGING_STEP: Final[int] = 1000
 
 IO_APP: Final[str] = "io"
 AIO_APP: Final[str] = "aio"
-AIOWEB_APP: Final[str] = "aioweb"
 DEFAULT_APP: Final[str] = IO_APP
-APP_TYPES: Final[Tuple[str, str, str]] = IO_APP, AIO_APP, AIOWEB_APP
+APP_TYPES: Final[Tuple[str, str]] = IO_APP, AIO_APP

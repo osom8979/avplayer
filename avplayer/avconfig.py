@@ -8,7 +8,6 @@ from typing import List, Optional, Tuple
 from avplayer.logging.logging import logger
 from avplayer.variables import (
     AIO_APP,
-    AIOWEB_APP,
     DEFAULT_AV_OPEN_TIMEOUT,
     DEFAULT_AV_READ_TIMEOUT,
     DEFAULT_HTTP_BIND,
@@ -25,7 +24,6 @@ from avplayer.variables import (
 class AvAppType(Enum):
     IO = auto()
     AIO = auto()
-    AIOWEB = auto()
 
 
 class AvConfig:
@@ -86,8 +84,6 @@ class AvConfig:
             return AvAppType.IO
         elif choice == AIO_APP:
             return AvAppType.AIO
-        elif choice == AIOWEB_APP:
-            return AvAppType.AIOWEB
         else:
             raise NotImplementedError
 
