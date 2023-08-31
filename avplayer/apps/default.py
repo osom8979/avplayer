@@ -9,15 +9,16 @@ from numpy import uint8
 from numpy.typing import NDArray
 from overrides import override
 
-from avplayer.apps.base.app_base import AppInterface
-from avplayer.apps.base.async_av_app_base import AsyncAvAppBase
-from avplayer.apps.base.av_app_base import AvAppBase
+from avplayer.apps.base.async_av_app import AsyncAvApp
+from avplayer.apps.base.async_av_tk import AsyncAvTk
+from avplayer.apps.base.av_app import AvApp
+from avplayer.apps.base.base import AppInterface
 from avplayer.apps.interface.av_interface import AsyncAvInterface, AvInterface
 from avplayer.avconfig import AvAppType, AvConfig
 from avplayer.logging.logging import logger
 
 
-class IoApp(AvAppBase, AvInterface):
+class IoApp(AvApp, AvInterface):
     def __init__(self, config: AvConfig, coro=None):
         super().__init__(config, self)
         self._coro = coro
@@ -38,7 +39,32 @@ class IoApp(AvAppBase, AvInterface):
             return image
 
 
-class AioApp(AsyncAvAppBase, AsyncAvInterface):
+class AioApp(AsyncAvApp, AsyncAvInterface):
+    def __init__(self, config: AvConfig, coro=None):
+        super().__init__(config, self)
+        self._is_coroutine = iscoroutinefunction(coro)
+        self._coro = coro
+
+    @override
+    async def on_open(self) -> None:
+        pass
+
+    @override
+    async def on_close(self) -> None:
+        pass
+
+    @override
+    async def on_image(self, image: NDArray[uint8]) -> Optional[NDArray[uint8]]:
+        if self._coro is not None:
+            if self._is_coroutine:
+                return await self._coro(image)
+            else:
+                return self._coro(image)
+        else:
+            return image
+
+
+class AioTk(AsyncAvTk, AsyncAvInterface):
     def __init__(self, config: AvConfig, coro=None):
         super().__init__(config, self)
         self._is_coroutine = iscoroutinefunction(coro)
@@ -69,6 +95,8 @@ def create_app(config: AvConfig, coro=None) -> AppInterface:
         return IoApp(config, coro)
     elif app_type == AvAppType.AIO:
         return AioApp(config, coro)
+    elif app_type == AvAppType.AIOTK:
+        return AioTk(config, coro)
     else:
         raise ValueError(f"Unknown app type: {app_type}")
 

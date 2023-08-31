@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from typing import Final, Tuple
+from typing import Final, Sequence, Tuple
 
 # noinspection SpellCheckingInspection
 REALTIME_FORMATS = (
@@ -66,5 +66,6 @@ DEFAULT_LOGGING_STEP: Final[int] = 1000
 
 IO_APP: Final[str] = "io"
 AIO_APP: Final[str] = "aio"
+AIOTK_APP: Final[str] = "aiotk"
 DEFAULT_APP: Final[str] = IO_APP
-APP_TYPES: Final[Tuple[str, str]] = IO_APP, AIO_APP
+APP_TYPES: Final[Sequence[str]] = IO_APP, AIO_APP, AIOTK_APP

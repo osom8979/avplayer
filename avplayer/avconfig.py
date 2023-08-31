@@ -24,6 +24,7 @@ from avplayer.variables import (
 class AvAppType(Enum):
     IO = auto()
     AIO = auto()
+    AIOTK = auto()
 
 
 class AvConfig:

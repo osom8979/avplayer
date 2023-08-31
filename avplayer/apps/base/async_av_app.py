@@ -12,7 +12,7 @@ from numpy.typing import NDArray
 from overrides import override
 
 from avplayer.aio.run import aio_run
-from avplayer.apps.base.av_app_base import AvAppBase
+from avplayer.apps.base.av_app import AvApp
 from avplayer.apps.interface.av_interface import AsyncAvInterface
 from avplayer.avconfig import AvConfig
 from avplayer.debug.step_avg import StepAvg
@@ -20,7 +20,7 @@ from avplayer.logging.logging import logger
 from avplayer.variables import VERBOSE_LEVEL_2
 
 
-class AsyncAvAppBase(AvAppBase):
+class AsyncAvApp(AvApp):
     _callback: Optional[AsyncAvInterface]  # type: ignore[assignment]
 
     def __init__(self, config: AvConfig, callback: Optional[AsyncAvInterface] = None):

@@ -6,13 +6,13 @@ from numpy import uint8
 from numpy.typing import NDArray
 from overrides import override
 
-from avplayer.apps.base.app_base import AppBase
+from avplayer.apps.base.base import AppBase
 from avplayer.apps.interface.av_interface import AvInterface
 from avplayer.av.av_io import AvIo
 from avplayer.avconfig import AvConfig
 
 
-class AvAppBase(AppBase):
+class AvApp(AppBase):
     _callback: Optional[AvInterface]
 
     def __init__(self, config: AvConfig, callback: Optional[AvInterface] = None):
