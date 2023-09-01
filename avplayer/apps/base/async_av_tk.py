@@ -319,14 +319,16 @@ class AsyncAvTk(AsyncAvApp):
             await self._until_avio_complete()
 
     @override
-    def on_grab(self, image: NDArray[uint8]) -> NDArray[uint8]:
+    def on_grab(self, image: NDArray[uint8]) -> None:
         if not self._avio.is_done_enabled:
             try:
-                frame = (image[:, :, ::-1] if len(image.shape) == 3 else image).copy()
-                self._image_queue.put_nowait(frame)
+                if self._callback:
+                    image = self._callback.on_grap(image)
+                if len(image.shape) == 3:
+                    image = image[:, :, ::-1]
+                self._image_queue.put_nowait(image)
             except QueueFull:
                 logger.warning("The image queue is full. Drop the current frame")
-        return image
 
     @override
     def start(self) -> None:

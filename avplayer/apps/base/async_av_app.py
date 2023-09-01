@@ -66,8 +66,8 @@ class AsyncAvApp(AvApp):
         finally:
             self._async_imgproc_step.do_exit()
 
-    def on_grab(self, image: NDArray[uint8]) -> Optional[NDArray[uint8]]:
-        return image
+    def on_grab(self, image: NDArray[uint8]) -> None:
+        pass
 
     def _enqueue_on_image_coroutine(
         self, loop: AbstractEventLoop, image: NDArray[uint8]

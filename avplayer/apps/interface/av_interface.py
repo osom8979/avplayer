@@ -43,3 +43,7 @@ class AsyncAvTckInterface(AsyncAvInterface):
     @abstractmethod
     async def on_key(self, keysym: str) -> None:
         raise NotImplementedError
+
+    @abstractmethod
+    def on_grap(self, image: NDArray[uint8]) -> NDArray[uint8]:
+        raise NotImplementedError

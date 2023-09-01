@@ -102,6 +102,10 @@ class AioTk(AsyncAvTk, AsyncAvTckInterface):
         else:
             return image
 
+    @override
+    def on_grap(self, image: NDArray[uint8]) -> NDArray[uint8]:
+        return image
+
 
 def create_app(config: AvConfig, coro=None) -> AppInterface:
     app_type = config.app_type
