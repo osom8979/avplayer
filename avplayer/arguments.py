@@ -17,6 +17,7 @@ from avplayer.variables import (
     DEFAULT_LOGGING_STEP,
     DEFAULT_WIN_FPS,
     DEFAULT_WIN_GEOMETRY,
+    DEFAULT_WIN_QUEUE_SIZE,
     DEFAULT_WIN_TITLE,
 )
 
@@ -87,12 +88,14 @@ def default_argument_parser() -> ArgumentParser:
     parser.add_argument(
         "--ffmpeg-path",
         default="ffmpeg",
+        metavar="path",
         help="FFmpeg command path",
     )
     parser.add_argument(
         "--logging-step",
         type=int,
         default=DEFAULT_LOGGING_STEP,
+        metavar="size",
         help="An iterative step that emits statistics results to a logger",
     )
 
@@ -192,13 +195,22 @@ def default_argument_parser() -> ArgumentParser:
     parser.add_argument(
         "--win-title",
         default=DEFAULT_WIN_TITLE,
+        metavar="title",
         help=f"Tk window title (default: '{DEFAULT_WIN_TITLE}')",
     )
     parser.add_argument(
         "--win-fps",
         type=int,
         default=DEFAULT_WIN_FPS,
+        metavar="fps",
         help=f"Tk window title (default: {DEFAULT_WIN_FPS})",
+    )
+    parser.add_argument(
+        "--win-queue-size",
+        type=int,
+        default=DEFAULT_WIN_QUEUE_SIZE,
+        metavar="size",
+        help=f"Image queue size (default: {DEFAULT_WIN_QUEUE_SIZE})",
     )
 
     parser.add_argument(

@@ -1,6 +1,14 @@
 # -*- coding: utf-8 -*-
 
-from asyncio import create_task, get_running_loop, run_coroutine_threadsafe
+from asyncio import Event as AsyncioEvent
+from asyncio import (
+    Queue,
+    QueueEmpty,
+    QueueFull,
+    create_task,
+    get_running_loop,
+    run_coroutine_threadsafe,
+)
 from asyncio import sleep as asyncio_sleep
 from functools import partial
 from tkinter import NW, Canvas, Event, TclError, Tk
@@ -55,6 +63,7 @@ class AsyncAvTk(AsyncAvApp):
     _exception: Optional[BaseException]
     _latest_size: Tuple[int, int]
     _photo: PhotoImage
+    _image_queue: Queue[NDArray]
 
     def __init__(
         self,
@@ -66,7 +75,7 @@ class AsyncAvTk(AsyncAvApp):
         self._tk = Tk()
         self._tk.title(config.win_title)
         self._tk.geometry(config.win_geometry)
-        self._tk.resizable(False, False)
+        self._tk.resizable(True, True)
 
         self._exception = None
         self._update_interval = 1.0 / config.win_fps
@@ -110,7 +119,8 @@ class AsyncAvTk(AsyncAvApp):
         for key in SPECIAL_KEYS:
             self._tk.bind(key, partial(self._special_key, key))
 
-        self._use_safety_update = False  # But, slow ...
+        self._tk_done = AsyncioEvent()
+        self._image_queue = Queue(maxsize=config.win_queue_size)
 
     @property
     def tk(self) -> Tk:
@@ -166,6 +176,7 @@ class AsyncAvTk(AsyncAvApp):
 
     def quit(self) -> None:
         self._avio.done()
+        self._tk_done.set()
 
     @staticmethod
     def call_event(coro) -> None:
@@ -252,8 +263,18 @@ class AsyncAvTk(AsyncAvApp):
 
         try:
             logger.info("Start tk event loop ...")
-            while not self._avio.is_done_enabled:
+            while not self._tk_done.is_set():
                 # self._tk.update()
+
+                try:
+                    frame = self._image_queue.get_nowait()
+                except QueueEmpty:
+                    if self.config.verbose >= 2:
+                        logger.debug(
+                            "The image queue is empty. Skip the current frame."
+                        )
+                else:
+                    self.update_canvas(frame)
 
                 # Process all pending events
                 while self._tk.dooneevent(DONT_WAIT) > 0:
@@ -300,10 +321,11 @@ class AsyncAvTk(AsyncAvApp):
     @override
     def on_grab(self, image: NDArray[uint8]) -> NDArray[uint8]:
         if not self._avio.is_done_enabled:
-            if self._use_safety_update:
-                self._tk.after(0, self.update_canvas, image)
-            else:
-                self.update_canvas(image[:, :, ::-1].copy())
+            try:
+                frame = (image[:, :, ::-1] if len(image.shape) == 3 else image).copy()
+                self._image_queue.put_nowait(frame)
+            except QueueFull:
+                logger.warning("The image queue is full. Drop the current frame")
         return image
 
     @override

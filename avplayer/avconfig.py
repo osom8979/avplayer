@@ -19,6 +19,7 @@ from avplayer.variables import (
     DEFAULT_LOGGING_STEP,
     DEFAULT_WIN_FPS,
     DEFAULT_WIN_GEOMETRY,
+    DEFAULT_WIN_QUEUE_SIZE,
     DEFAULT_WIN_TITLE,
     IO_APP,
     PRINTER_NAMESPACE_ATTR_KEY,
@@ -53,6 +54,7 @@ class AvConfig:
         win_geometry=DEFAULT_WIN_GEOMETRY,
         win_title=DEFAULT_WIN_TITLE,
         win_fps=DEFAULT_WIN_FPS,
+        win_queue_size=DEFAULT_WIN_QUEUE_SIZE,
         debug=False,
         verbose=0,
         *,
@@ -76,6 +78,7 @@ class AvConfig:
         self._win_geometry = win_geometry
         self._win_title = win_title
         self._win_fps = win_fps
+        self._win_queue_size = win_queue_size
         self._debug = debug
         self._verbose = verbose
         self._args = deepcopy(args) if args is not None else Namespace()
@@ -122,6 +125,7 @@ class AvConfig:
         assert isinstance(args.win_geometry, str)
         assert isinstance(args.win_title, str)
         assert isinstance(args.win_fps, int)
+        assert isinstance(args.win_queue_size, int)
 
         debug = args.debug
         verbose = args.verbose
@@ -142,6 +146,7 @@ class AvConfig:
         win_geometry = args.win_geometry
         win_title = args.win_title
         win_fps = args.win_fps
+        win_queue_size = args.win_queue_size
 
         assert hasattr(args, PRINTER_NAMESPACE_ATTR_KEY)
         printer = getattr(args, PRINTER_NAMESPACE_ATTR_KEY)
@@ -165,6 +170,7 @@ class AvConfig:
             win_geometry=win_geometry,
             win_title=win_title,
             win_fps=win_fps,
+            win_queue_size=win_queue_size,
             debug=debug,
             verbose=verbose,
             args=args,
@@ -254,6 +260,10 @@ class AvConfig:
     @property
     def win_fps(self) -> int:
         return self._win_fps
+
+    @property
+    def win_queue_size(self) -> int:
+        return self._win_queue_size
 
     def print(self, *args, **kwargs) -> None:
         self._printer(*args, **kwargs)
