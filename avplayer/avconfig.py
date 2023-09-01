@@ -9,6 +9,7 @@ from typing import List, Optional, Tuple
 from avplayer.logging.logging import logger
 from avplayer.variables import (
     AIO_APP,
+    AIOTK_APP,
     DEFAULT_AV_OPEN_TIMEOUT,
     DEFAULT_AV_READ_TIMEOUT,
     DEFAULT_HTTP_BIND,
@@ -16,11 +17,10 @@ from avplayer.variables import (
     DEFAULT_HTTP_TIMEOUT,
     DEFAULT_IO_BUFFER_SIZE,
     DEFAULT_LOGGING_STEP,
+    DEFAULT_WIN_FPS,
     DEFAULT_WIN_GEOMETRY,
     DEFAULT_WIN_TITLE,
-    DEFAULT_WIN_FPS,
     IO_APP,
-    AIOTK_APP,
     PRINTER_NAMESPACE_ATTR_KEY,
 )
 

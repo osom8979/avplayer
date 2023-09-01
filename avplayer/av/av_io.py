@@ -134,7 +134,12 @@ class AvIo:
     def latest_exception(self, e: BaseException) -> None:
         self._latest_exception = e
 
-    def shutdown(self) -> None:
+    @property
+    def is_done_enabled(self) -> bool:
+        return self._done.is_set()
+
+    def done(self) -> None:
+        logger.info("Enable avio 'done' flag")
         return self._done.set()
 
     def _open_input_container(self) -> InputContainer:
@@ -210,6 +215,7 @@ class AvIo:
             self._output_container = output_container
             self._input_stream = input_stream
             self._output_stream = output_stream
+            self._done.clear()
             logger.info("Successfully opened the I/O container")
 
     def close(self) -> None:
@@ -306,7 +312,7 @@ class AvIo:
 
     def run(self, coro) -> None:
         try:
-            logger.info("Start streaming ...")
+            logger.info("Start avio streaming ...")
             while True:
                 if self._latest_exception is not None:
                     raise AlreadyLatestException from self._latest_exception

@@ -52,6 +52,8 @@ class AsyncAvApp(AvApp):
                 next_image = await self._callback.on_image(image)
             else:
                 next_image = image
+            if next_image is not None:
+                self.on_grab(next_image)
         except BaseException as e:
             self._avio.latest_exception = e
             return
@@ -63,6 +65,9 @@ class AsyncAvApp(AvApp):
                 return
         finally:
             self._async_imgproc_step.do_exit()
+
+    def on_grab(self, image: NDArray[uint8]) -> Optional[NDArray[uint8]]:
+        return image
 
     def _enqueue_on_image_coroutine(
         self, loop: AbstractEventLoop, image: NDArray[uint8]
@@ -79,10 +84,10 @@ class AsyncAvApp(AvApp):
                 partial(self._enqueue_on_image_coroutine, loop),
             )
         except CancelledError:
-            logger.warning("An cancelled signal was detected")
+            logger.debug("A 'cancel' signal was detected in the thread pool.")
         finally:
-            logger.debug("Enable streamer shutdown flag")
-            self._avio.shutdown()
+            if not self._avio.is_done_enabled:
+                self._avio.done()
 
             logger.debug("Wait for the executor to exit ...")
             executor.shutdown(wait=True)

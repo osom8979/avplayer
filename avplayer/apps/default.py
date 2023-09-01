@@ -13,7 +13,11 @@ from avplayer.apps.base.async_av_app import AsyncAvApp
 from avplayer.apps.base.async_av_tk import AsyncAvTk
 from avplayer.apps.base.av_app import AvApp
 from avplayer.apps.base.base import AppInterface
-from avplayer.apps.interface.av_interface import AsyncAvInterface, AvInterface
+from avplayer.apps.interface.av_interface import (
+    AsyncAvInterface,
+    AsyncAvTckInterface,
+    AvInterface,
+)
 from avplayer.avconfig import AvAppType, AvConfig
 from avplayer.logging.logging import logger
 
@@ -25,11 +29,11 @@ class IoApp(AvApp, AvInterface):
 
     @override
     def on_open(self) -> None:
-        pass
+        logger.info("on_open()")
 
     @override
     def on_close(self) -> None:
-        pass
+        logger.info("on_close()")
 
     @override
     def on_image(self, image: NDArray[uint8]) -> Optional[NDArray[uint8]]:
@@ -47,11 +51,11 @@ class AioApp(AsyncAvApp, AsyncAvInterface):
 
     @override
     async def on_open(self) -> None:
-        pass
+        logger.info("on_open()")
 
     @override
     async def on_close(self) -> None:
-        pass
+        logger.info("on_close()")
 
     @override
     async def on_image(self, image: NDArray[uint8]) -> Optional[NDArray[uint8]]:
@@ -64,7 +68,7 @@ class AioApp(AsyncAvApp, AsyncAvInterface):
             return image
 
 
-class AioTk(AsyncAvTk, AsyncAvInterface):
+class AioTk(AsyncAvTk, AsyncAvTckInterface):
     def __init__(self, config: AvConfig, coro=None):
         super().__init__(config, self)
         self._is_coroutine = iscoroutinefunction(coro)
@@ -72,11 +76,21 @@ class AioTk(AsyncAvTk, AsyncAvInterface):
 
     @override
     async def on_open(self) -> None:
-        pass
+        logger.info("on_open()")
 
     @override
     async def on_close(self) -> None:
-        pass
+        logger.info("on_close()")
+
+    @override
+    async def on_resize(self, width: int, height: int) -> None:
+        logger.info(f"on_resize(width={width},height={height})")
+
+    @override
+    async def on_key(self, keysym: str) -> None:
+        logger.info(f"on_key(keysym='{keysym}')")
+        if keysym in ("Q", "q", "Escape"):
+            self.quit()
 
     @override
     async def on_image(self, image: NDArray[uint8]) -> Optional[NDArray[uint8]]:
