@@ -15,9 +15,9 @@ from avplayer.aio.run import aio_run
 from avplayer.apps.base.av_app import AvApp
 from avplayer.apps.interface.av_interface import AsyncAvInterface
 from avplayer.avconfig import AvConfig
-from avplayer.debug.step_avg import StepAvg
+from avplayer.debug.avg_stat import AvgStat
 from avplayer.logging.logging import logger
-from avplayer.variables import VERBOSE_LEVEL_2
+from avplayer.variables import VERBOSE_LEVEL_2 as VL2
 
 
 class AsyncAvApp(AvApp):
@@ -27,44 +27,43 @@ class AsyncAvApp(AvApp):
         super().__init__(config, None)
         self._callback = callback
 
-        self._async_enqueue_step = StepAvg(
-            "AsyncEnqueue",
-            logger,
-            self.config.logging_step,
-            self.config.verbose,
-            VERBOSE_LEVEL_2,
-        )
-        self._async_imgproc_step = StepAvg(
-            "AsyncImgproc",
-            logger,
-            self.config.logging_step,
-            self.config.verbose,
-            VERBOSE_LEVEL_2,
-        )
+        self._pub = 0
+        self._sub = 0
+        self._pubsub_threshold = 10
+        self._frame_drop = False
+        # If the consumption rate is slower than the production rate,
+        # frames are dropped.
 
-    async def _call_async_image(self, image: NDArray[uint8], begin: datetime) -> None:
-        self._async_enqueue_step.do_enter(begin)
-        self._async_enqueue_step.do_exit()
+        step = self.config.logging_step
+        verbose = self.config.verbose
+        self._enqueue_step = AvgStat("Enqueue", logger, step, verbose, VL2)
+        self._call_step = AvgStat("Call", logger, step, verbose, VL2)
+        self._grab_stat = AvgStat("Grab", logger, step, verbose, VL2)
 
-        self._async_imgproc_step.do_enter()
+    async def _after(self, image: NDArray[uint8], begin: datetime) -> None:
+        self._enqueue_step.do_enter(begin)
+        self._enqueue_step.do_exit()
+
         try:
-            if self._callback:
-                next_image = await self._callback.on_image(image)
-            else:
-                next_image = image
-            if next_image is not None:
-                self.on_grab(next_image)
-        except BaseException as e:
-            self._avio.latest_exception = e
-            return
-        else:
-            try:
-                self.avio.send(next_image)
-            except BaseException as e:
-                self._avio.latest_exception = e
-                return
+            with self._call_step:
+                try:
+                    if self._callback:
+                        next_image = await self._callback.on_image(image)
+                    else:
+                        next_image = image
+                except BaseException as e:
+                    self._avio.latest_exception = e
+                else:
+                    if next_image is None:
+                        return
+                    with self._grab_stat:
+                        self.on_grab(next_image)
+                    try:
+                        self.avio.send(next_image)
+                    except BaseException as e:
+                        self._avio.latest_exception = e
         finally:
-            self._async_imgproc_step.do_exit()
+            self._sub += 1
 
     def on_grab(self, image: NDArray[uint8]) -> None:
         pass
@@ -72,7 +71,19 @@ class AsyncAvApp(AvApp):
     def _enqueue_on_image_coroutine(
         self, loop: AbstractEventLoop, image: NDArray[uint8]
     ) -> None:
-        run_coroutine_threadsafe(self._call_async_image(image, datetime.now()), loop)
+        self._pub += 1
+
+        assert self._pub >= self._sub
+        remain = self._pub - self._sub
+
+        slow_consumption = remain >= self._pubsub_threshold
+        if slow_consumption:
+            logger.warning("Frame consumption is slow ...")
+
+        if slow_consumption and self._frame_drop:
+            return
+
+        run_coroutine_threadsafe(self._after(image, datetime.now()), loop)
 
     async def _run_avio(self) -> None:
         executor = ThreadPoolExecutor(max_workers=1)

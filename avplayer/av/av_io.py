@@ -13,7 +13,7 @@ from av import open as av_open  # noqa
 from av.container import InputContainer, OutputContainer  # noqa
 from av.error import BrokenPipeError, ConnectionRefusedError  # noqa
 from av.stream import Stream  # noqa
-from avplayer.debug.step_avg import StepAvg
+from avplayer.debug.avg_stat import AvgStat
 from avplayer.ffmpeg.ffmpeg import (
     AUTOMATIC_DETECT_FILE_FORMAT,
     CRF_SANE_RANGE_MAX,
@@ -87,7 +87,7 @@ class AvIo:
         self._timeout = open_timeout, read_timeout
         self._source_size = source_size
         self._output_size = destination_size
-        self._re_request_wait_seconds = 0.001
+        self._eagain_wait = 0.001
         self._flush_down_threshold = 10
         self._flush_down_count = 0
         self._verbose = verbose
@@ -105,12 +105,12 @@ class AvIo:
         logger.info(f"Open timeout: {self._timeout[0]:.3f}s")
         logger.info(f"Read timeout: {self._timeout[1]:.3f}s")
 
-        self._iter_step = StepAvg("Iter", logger, logging_step, verbose, VL0)
-        self._callback_step = StepAvg("Callback", logger, logging_step, verbose, VL1)
-        self._demux_step = StepAvg("Demux", logger, logging_step, verbose, VL2)
-        self._decode_step = StepAvg("Decode", logger, logging_step, verbose, VL2)
-        self._encode_step = StepAvg("Encode", logger, logging_step, verbose, VL2)
-        self._mux_step = StepAvg("Mux", logger, logging_step, verbose, VL2)
+        self._iter_stat = AvgStat("Iter", logger, logging_step, verbose, VL0)
+        self._coro_stat = AvgStat("Coro", logger, logging_step, verbose, VL1)
+        self._read_stat = AvgStat("Read", logger, logging_step, verbose, VL2)
+        self._decode_stat = AvgStat("Decode", logger, logging_step, verbose, VL2)
+        self._encode_stat = AvgStat("Encode", logger, logging_step, verbose, VL2)
+        self._write_stat = AvgStat("Write", logger, logging_step, verbose, VL2)
 
     @property
     def verbose(self) -> int:
@@ -233,12 +233,11 @@ class AvIo:
         logger.info("The I/O container was successfully closed")
 
     def recv(self):
-        while True:
+        while self.is_play_or_raise():
             try:
-                while True:
-                    self._demux_step.do_enter()
-                    packet = next(self._input_container.demux(self._input_stream))
-                    self._demux_step.do_exit()
+                while self.is_play_or_raise():
+                    with self._read_stat:
+                        packet = next(self._input_container.demux(self._input_stream))
 
                     # We need to skip the "flushing" packets that `demux` generates.
                     if packet.dts is None:
@@ -253,20 +252,22 @@ class AvIo:
                     else:
                         self._flush_down_count = 0
 
-                    self._decode_step.do_enter()
-                    frames = packet.decode()
-                    self._decode_step.do_exit()
+                    with self._decode_stat:
+                        frames = packet.decode()
 
                     assert isinstance(frames, list)
                     for frame in frames:
                         if frame is None:
-                            logger.warning("Empty frame")
+                            logger.warning("Empty frame has been detected")
                             continue
                         yield frame
             except AVError as e:
                 if isinstance(e, FFmpegError) and e.errno == EAGAIN:
-                    logger.warning("Resource temporarily unavailable")
-                    sleep(self._re_request_wait_seconds)
+                    logger.warning(
+                        "Resource temporarily unavailable. "
+                        f"Temporarily waiting {self._eagain_wait:.2f}s ..."
+                    )
+                    sleep(self._eagain_wait)
                     continue
                 else:
                     raise
@@ -284,13 +285,12 @@ class AvIo:
         assert self._output_container is not None
         assert self._output_stream is not None
 
-        self._encode_step.do_enter()
-        next_frame = VideoFrame.from_ndarray(image, format="bgr24")
-        output_packets = self._output_stream.encode(next_frame)
-        self._encode_step.do_exit()
+        with self._encode_stat:
+            next_frame = VideoFrame.from_ndarray(image, format="bgr24")
+            output_packets = self._output_stream.encode(next_frame)
 
         for output_packet in output_packets:
-            with self._mux_step:
+            with self._write_stat:
                 self._output_container.mux(output_packet)
 
     def frame_to_ndarray(self, frame: VideoFrame) -> NDArray[uint8]:
@@ -303,24 +303,24 @@ class AvIo:
     def iter(self, coro) -> None:
         frame = next(self.recv())
 
-        self._callback_step.do_enter()
-        image = self.frame_to_ndarray(frame)
-        result = coro(image) if coro else image
-        self._callback_step.do_exit()
+        with self._coro_stat:
+            image = self.frame_to_ndarray(frame)
+            result = coro(image) if coro else image
 
         self.send(result)
+
+    def is_play_or_raise(self) -> bool:
+        if self._latest_exception is not None:
+            raise AlreadyLatestException from self._latest_exception
+        if self._done.is_set():
+            raise InterruptedError
+        return True
 
     def run(self, coro) -> None:
         try:
             logger.info("Start avio streaming ...")
-            while True:
-                if self._latest_exception is not None:
-                    raise AlreadyLatestException from self._latest_exception
-
-                if self._done.is_set():
-                    raise InterruptedError
-
-                with self._iter_step:
+            while self.is_play_or_raise():
+                with self._iter_stat:
                     self.iter(coro)
         except AVError as e:
             self._latest_exception = e
@@ -331,13 +331,14 @@ class AvIo:
         except ConnectionRefusedError as e:
             self._latest_exception = e
             logger.error(f"Connection refused error: {e}")
-        except AlreadyLatestException as e:
-            logger.error(f"Already latest exception: {e}")
+        except AlreadyLatestException:
+            assert self._latest_exception is not None
+            logger.error(f"Already latest exception: {self._latest_exception}")
         except StopIteration as e:
             logger.warning(f"Stop iteration: {e}")
-        except InterruptedError as e:
-            logger.warning(f"Interrupt signal detected: {e}")
         except KeyboardInterrupt as e:
             logger.warning(f"Keyboard interrupt signal detected: {e}")
+        except InterruptedError as e:
+            logger.warning(f"Interrupt signal detected: {e}")
         except EOFError as e:
             logger.warning(f"End of file: {e}")

@@ -8,7 +8,7 @@ from typing import Final, Optional
 STEP_AVG_STRFMT: Final[str] = "[{name}] Step #{step} average duration: {avg:.3f}s"
 
 
-class StepAvg:
+class AvgStat:
     def __init__(
         self,
         name: str,
