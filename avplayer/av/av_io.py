@@ -9,6 +9,7 @@ from numpy import uint8
 from numpy.typing import NDArray
 
 from avplayer.av.av_open import open_input_container, open_output_container
+from avplayer.av.av_options import CommonAvOptions
 from avplayer.debug.avg_stat import AvgStat
 from avplayer.ffmpeg.ffmpeg import (
     AUTOMATIC_DETECT_FILE_FORMAT,
@@ -61,6 +62,12 @@ class AvIo:
         self.VideoFrame = VideoFrame
         self.BrokenPipeError = BrokenPipeError
         self.ConnectionRefusedError = ConnectionRefusedError
+
+        assert isinstance(self.AVError, type)
+        assert isinstance(self.FFmpegError, type)
+        assert isinstance(self.VideoFrame, type)
+        assert isinstance(self.BrokenPipeError, type)
+        assert isinstance(self.ConnectionRefusedError, type)
 
         self._input_container: Optional[InputContainer] = None
         self._input_stream: Optional[Stream] = None
@@ -148,20 +155,20 @@ class AvIo:
         return self._done.set()
 
     def _open_input_container(self):
-        return open_input_container(
-            self._source,
+        options = CommonAvOptions(
             options=self._input_options,
             buffer_size=self._buffer_size,
             timeout=self._timeout,
         )
+        return open_input_container(self._source, options)
 
     def _open_output_container(self):
-        return open_output_container(
-            self._output,
-            file_format=self._file_format,
+        options = CommonAvOptions(
+            format=self._file_format,
             buffer_size=self._buffer_size,
             timeout=self._timeout,
         )
+        return open_output_container(self._output, options)
 
     def open(self) -> None:
         from av.container import InputContainer, OutputContainer

@@ -46,9 +46,6 @@ class CommonAvOptions:
     or a (open timeout, read timeout) tuple.
     """
 
-    def get_format(self) -> str:
-        return self.format if self.format else "autodect"
-
     def get_metadata_encoding(self) -> str:
         if self.metadata_encoding:
             return self.metadata_encoding
