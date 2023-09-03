@@ -2,7 +2,6 @@
 
 from ctypes import CDLL
 
-from av.logging import ERROR
 from avplayer.av.av_modules import find_libavutil_path
 
 
@@ -23,6 +22,8 @@ def av_log_get_level() -> int:
 
 
 def silent_av_warnings() -> None:
+    from av.logging import ERROR
+
     # e.g.
     # [swscaler @ 0x5569f73ced40]
     # deprecated pixel format used, make sure you did set range correctly

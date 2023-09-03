@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from av.audio.stream import AudioStream
-from av.stream import Stream
-from av.video import VideoStream
 
+def inject_go_faster_stream(stream) -> None:
+    from av.stream import Stream
 
-def inject_go_faster_stream(stream: Stream) -> None:
+    assert isinstance(stream, Stream)
     assert hasattr(stream, "thread_type")
 
     # https://ffmpeg.org/ffmpeg-codecs.html
@@ -26,7 +25,10 @@ def inject_go_faster_stream(stream: Stream) -> None:
     setattr(stream, "thread_type", "AUTO")
 
 
-def inject_low_delay_stream(stream: Stream) -> None:
+def inject_low_delay_stream(stream) -> None:
+    from av.stream import Stream
+
+    assert isinstance(stream, Stream)
     assert hasattr(stream.codec_context, "flags")
 
     # av/codec/context.pyx
@@ -75,7 +77,10 @@ def inject_low_delay_stream(stream: Stream) -> None:
     setattr(stream.codec_context, "flags", "LOW_DELAY")
 
 
-def inject_speedup_tricks_stream(stream: Stream) -> None:
+def inject_speedup_tricks_stream(stream) -> None:
+    from av.stream import Stream
+
+    assert isinstance(stream, Stream)
     assert hasattr(stream.codec_context, "flags2")
 
     # NONE = 0
@@ -104,11 +109,16 @@ def inject_speedup_tricks_stream(stream: Stream) -> None:
 
 
 def set_stream_flags(
-    stream: Stream,
+    stream,
     go_faster=False,
     low_delay=False,
     speedup_tricks=False,
 ) -> None:
+    from av.audio.stream import AudioStream
+    from av.stream import Stream
+    from av.video import VideoStream
+
+    assert isinstance(stream, Stream)
     assert isinstance(stream, VideoStream) or isinstance(stream, AudioStream)
 
     if go_faster:

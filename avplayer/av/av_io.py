@@ -8,11 +8,7 @@ from typing import Final, Optional, Sequence, Tuple
 from numpy import uint8
 from numpy.typing import NDArray
 
-from av import AVError, FFmpegError, VideoFrame  # noqa
-from av import open as av_open  # noqa
-from av.container import InputContainer, OutputContainer  # noqa
-from av.error import BrokenPipeError, ConnectionRefusedError  # noqa
-from av.stream import Stream  # noqa
+from avplayer.av.av_open import open_input_container, open_output_container
 from avplayer.debug.avg_stat import AvgStat
 from avplayer.ffmpeg.ffmpeg import (
     AUTOMATIC_DETECT_FILE_FORMAT,
@@ -41,14 +37,6 @@ class AlreadyLatestException(RuntimeError):
 
 
 class AvIo:
-    _input_container: InputContainer
-    _input_stream: Stream
-
-    _output_container: Optional[OutputContainer]
-    _output_stream: Optional[Stream]
-
-    _latest_exception: Optional[BaseException]
-
     def __init__(
         self,
         source: str,
@@ -63,6 +51,23 @@ class AvIo:
         logging_step=100,
         verbose=0,
     ):
+        from av import AVError, FFmpegError, VideoFrame  # noqa
+        from av.container import InputContainer, OutputContainer  # noqa
+        from av.error import BrokenPipeError, ConnectionRefusedError  # noqa
+        from av.stream import Stream  # noqa
+
+        self.AVError = AVError
+        self.FFmpegError = FFmpegError
+        self.VideoFrame = VideoFrame
+        self.BrokenPipeError = BrokenPipeError
+        self.ConnectionRefusedError = ConnectionRefusedError
+
+        self._input_container: Optional[InputContainer] = None
+        self._input_stream: Optional[Stream] = None
+        self._output_container: Optional[OutputContainer] = None
+        self._output_stream: Optional[Stream] = None
+        self._latest_exception: Optional[BaseException] = None
+
         self._output_container = None
         self._output_stream = None
 
@@ -121,7 +126,7 @@ class AvIo:
         if self._latest_exception is None:
             return False
 
-        if not isinstance(self._latest_exception, AVError):
+        if not isinstance(self._latest_exception, self.AVError):
             return False
 
         return getattr(self._latest_exception, "errno") in SKIP_FLUSH_ERRORS
@@ -142,28 +147,27 @@ class AvIo:
         logger.info("Enable avio 'done' flag")
         return self._done.set()
 
-    def _open_input_container(self) -> InputContainer:
-        logger.debug(f"Open the input container: '{self._source}'")
-        return av_open(
+    def _open_input_container(self):
+        return open_input_container(
             self._source,
-            mode="r",
             options=self._input_options,
             buffer_size=self._buffer_size,
             timeout=self._timeout,
         )
 
-    def _open_output_container(self) -> OutputContainer:
-        logger.debug(f"Open the output container: '{self._output}'")
-        return av_open(
+    def _open_output_container(self):
+        return open_output_container(
             self._output,
-            mode="w",
-            format=self._file_format,
+            file_format=self._file_format,
             buffer_size=self._buffer_size,
             timeout=self._timeout,
         )
 
     def open(self) -> None:
-        input_container: Optional[OutputContainer] = None
+        from av.container import InputContainer, OutputContainer
+        from av.stream import Stream
+
+        input_container: Optional[InputContainer] = None
         input_stream: Optional[Stream] = None
 
         output_container: Optional[OutputContainer] = None
@@ -219,8 +223,12 @@ class AvIo:
             logger.info("Successfully opened the I/O container")
 
     def close(self) -> None:
-        self._input_container.close()
-        if self._output_container:
+        self._done.is_set()
+
+        if self._input_container is not None:
+            self._input_container.close()
+
+        if self._output_container is not None:
             assert self._output_stream is not None
 
             try:
@@ -230,6 +238,11 @@ class AvIo:
                 logger.warning(f"Flush error: {e}")
 
             self._output_container.close()
+
+        self._input_container = None
+        self._output_container = None
+        self._input_stream = None
+        self._output_stream = None
         logger.info("The I/O container was successfully closed")
 
     def recv(self):
@@ -261,8 +274,8 @@ class AvIo:
                             logger.warning("Empty frame has been detected")
                             continue
                         yield frame
-            except AVError as e:
-                if isinstance(e, FFmpegError) and e.errno == EAGAIN:
+            except self.AVError as e:
+                if isinstance(e, self.FFmpegError) and e.errno == EAGAIN:
                     logger.warning(
                         "Resource temporarily unavailable. "
                         f"Temporarily waiting {self._eagain_wait:.2f}s ..."
@@ -286,14 +299,15 @@ class AvIo:
         assert self._output_stream is not None
 
         with self._encode_stat:
-            next_frame = VideoFrame.from_ndarray(image, format="bgr24")
+            next_frame = self.VideoFrame.from_ndarray(image, format="bgr24")
             output_packets = self._output_stream.encode(next_frame)
 
         for output_packet in output_packets:
             with self._write_stat:
                 self._output_container.mux(output_packet)
 
-    def frame_to_ndarray(self, frame: VideoFrame) -> NDArray[uint8]:
+    def frame_to_ndarray(self, frame) -> NDArray[uint8]:
+        assert isinstance(frame, self.VideoFrame)
         if self._source_size is not None:
             width, height = self._source_size
             return frame.reformat(width, height, "bgr24").to_ndarray()
@@ -302,11 +316,9 @@ class AvIo:
 
     def iter(self, coro) -> None:
         frame = next(self.recv())
-
         with self._coro_stat:
             image = self.frame_to_ndarray(frame)
             result = coro(image) if coro else image
-
         self.send(result)
 
     def is_play_or_raise(self) -> bool:
@@ -322,13 +334,13 @@ class AvIo:
             while self.is_play_or_raise():
                 with self._iter_stat:
                     self.iter(coro)
-        except AVError as e:
+        except self.AVError as e:
             self._latest_exception = e
             logger.error(f"AV error: {e}")
-        except BrokenPipeError as e:
+        except self.BrokenPipeError as e:
             self._latest_exception = e
             logger.error(f"Broken pipe error: {e}")
-        except ConnectionRefusedError as e:
+        except self.ConnectionRefusedError as e:
             self._latest_exception = e
             logger.error(f"Connection refused error: {e}")
         except AlreadyLatestException:

@@ -2,10 +2,6 @@
 
 from typing import NamedTuple, Optional, Tuple, Union
 
-from av import open as av_open  # noqa
-from av._core import time_base  # noqa
-from av.container import InputContainer
-
 
 class AvProbe(NamedTuple):
     width: int
@@ -17,6 +13,10 @@ def get_av_probe(
     file: str,
     timeout: Optional[Union[float, Tuple[float, float]]] = None,
 ) -> AvProbe:
+    from av import open as av_open  # noqa
+    from av._core import time_base  # noqa
+    from av.container import InputContainer
+
     # Elapsed seconds 0.04s ~ 0.07s in `AMD Ryzen 7 4700u` (10sec duration `.ts` file)
     input_container = av_open(file=file, mode="r", timeout=timeout)
     assert isinstance(input_container, InputContainer)
