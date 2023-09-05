@@ -185,6 +185,12 @@ def default_argument_parser() -> ArgumentParser:
         metavar="bytes",
         help=f"AV IO buffer size (default: {DEFAULT_IO_BUFFER_SIZE} bytes)",
     )
+    parser.add_argument(
+        "--drop-slow-frame",
+        action="store_true",
+        default=False,
+        help="If consumption is slow, it will drop frames",
+    )
 
     parser.add_argument(
         "--win-geometry",

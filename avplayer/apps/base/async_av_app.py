@@ -17,6 +17,7 @@ from avplayer.apps.interface.av_interface import AsyncAvInterface
 from avplayer.avconfig import AvConfig
 from avplayer.debug.avg_stat import AvgStat
 from avplayer.logging.logging import logger
+from avplayer.variables import VERBOSE_LEVEL_1 as VL1
 from avplayer.variables import VERBOSE_LEVEL_2 as VL2
 
 
@@ -77,10 +78,10 @@ class AsyncAvApp(AvApp):
         remain = self._pub - self._sub
 
         slow_consumption = remain >= self._pubsub_threshold
-        if slow_consumption:
+        if slow_consumption and self.config.verbose >= VL1:
             logger.warning("Frame consumption is slow ...")
 
-        if slow_consumption and self._frame_drop:
+        if slow_consumption and self.config.drop_slow_frame:
             return
 
         run_coroutine_threadsafe(self._after(image, datetime.now()), loop)

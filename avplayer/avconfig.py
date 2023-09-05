@@ -46,6 +46,7 @@ class AvConfig:
         timeout_open=DEFAULT_AV_OPEN_TIMEOUT,
         timeout_read=DEFAULT_AV_READ_TIMEOUT,
         buffer_size=DEFAULT_IO_BUFFER_SIZE,
+        drop_slow_frame=False,
         ffmpeg_path="ffmpeg",
         printer=print,
         logging_step=DEFAULT_LOGGING_STEP,
@@ -70,6 +71,7 @@ class AvConfig:
         self._timeout_open = timeout_open
         self._timeout_read = timeout_read
         self._buffer_size = buffer_size
+        self._drop_slow_frame = drop_slow_frame
         self._ffmpeg_path = ffmpeg_path
         self._printer = printer
         self._logging_step = logging_step
@@ -122,6 +124,7 @@ class AvConfig:
         assert isinstance(args.timeout_open, float)
         assert isinstance(args.timeout_read, float)
         assert isinstance(args.buffer_size, int)
+        assert isinstance(args.drop_slow_frame, bool)
         assert isinstance(args.win_geometry, str)
         assert isinstance(args.win_title, str)
         assert isinstance(args.win_fps, int)
@@ -143,6 +146,7 @@ class AvConfig:
         timeout_open = args.timeout_open
         timeout_read = args.timeout_read
         buffer_size = args.buffer_size
+        drop_slow_frame = args.drop_slow_frame
         win_geometry = args.win_geometry
         win_title = args.win_title
         win_fps = args.win_fps
@@ -162,6 +166,7 @@ class AvConfig:
             timeout_open=timeout_open,
             timeout_read=timeout_read,
             buffer_size=buffer_size,
+            drop_slow_frame=drop_slow_frame,
             ffmpeg_path=ffmpeg_path,
             printer=printer,
             logging_step=logging_step,
@@ -227,6 +232,10 @@ class AvConfig:
     @property
     def buffer_size(self) -> int:
         return self._buffer_size
+
+    @property
+    def drop_slow_frame(self) -> bool:
+        return self._drop_slow_frame
 
     @property
     def output(self) -> str:
