@@ -42,14 +42,22 @@ class AsyncAvApp(AvApp):
         self._grab_stat = AvgStat("Grab", logger, step, verbose, VL2)
 
     async def _after(self, image: NDArray[uint8], begin: datetime) -> None:
-        self._enqueue_step.do_enter(begin)
-        self._enqueue_step.do_exit()
+        """
+        [IMPORTANT]
+        await function calls should be reduced as much as possible.
+        """
 
         try:
+            self._enqueue_step.do_enter(begin)
+            self._enqueue_step.do_exit()
+
             with self._call_step:
                 try:
                     if self._callback:
+                        # [IMPORTANT] --------------------------------------#
+                        # The callback must be the only await function call #
                         next_image = await self._callback.on_image(image)
+                        # --------------------------------------------------#
                     else:
                         next_image = image
                 except BaseException as e:
@@ -57,12 +65,19 @@ class AsyncAvApp(AvApp):
                 else:
                     if next_image is None:
                         return
+
                     with self._grab_stat:
-                        self.on_grab(next_image)
+                        try:
+                            self.on_grab(next_image)
+                        except BaseException as e:
+                            logger.exception(e)
+
                     try:
                         self.avio.send(next_image)
                     except BaseException as e:
                         self._avio.latest_exception = e
+        except BaseException as e:
+            logger.exception(e)
         finally:
             self._sub += 1
 
@@ -72,8 +87,6 @@ class AsyncAvApp(AvApp):
     def _enqueue_on_image_coroutine(
         self, loop: AbstractEventLoop, image: NDArray[uint8]
     ) -> None:
-        self._pub += 1
-
         assert self._pub >= self._sub
         remain = self._pub - self._sub
 
@@ -85,6 +98,7 @@ class AsyncAvApp(AvApp):
             return
 
         run_coroutine_threadsafe(self._after(image, datetime.now()), loop)
+        self._pub += 1
 
     async def _run_avio(self) -> None:
         executor = ThreadPoolExecutor(max_workers=1)
