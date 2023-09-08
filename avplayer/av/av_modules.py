@@ -58,3 +58,7 @@ def find_ffmpeg_library_path(library_name: str) -> str:
 # noinspection SpellCheckingInspection
 def find_libavutil_path() -> str:
     return find_ffmpeg_library_path("libavutil")
+
+
+if __name__ == "__main__":
+    print(f"libavutil path: '{find_libavutil_path()}'")

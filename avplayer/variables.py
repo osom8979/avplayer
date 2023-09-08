@@ -44,7 +44,6 @@ Honored only when file is a file-like object.
 DEFAULT_AV_OPEN_TIMEOUT: Final[float] = 32.0
 DEFAULT_AV_READ_TIMEOUT: Final[float] = 16.0
 
-
 DEFAULT_AV_TIMEOUT: Final[Tuple[float, float]] = (
     DEFAULT_AV_OPEN_TIMEOUT,
     DEFAULT_AV_READ_TIMEOUT,
