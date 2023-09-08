@@ -10,7 +10,7 @@ from avplayer.apps.interface.av_interface import (
 from avplayer.av.av_io import AvIo
 from avplayer.avconfig import AvConfig
 
-__version__ = "1.7.3"
+__version__ = "1.7.4"
 __all__ = [
     "__version__",
     "AioApp",
