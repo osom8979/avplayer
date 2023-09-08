@@ -11,15 +11,11 @@ from asyncio import (
 )
 from asyncio import sleep as asyncio_sleep
 from functools import partial
-from tkinter import NW, Canvas, Event, TclError, Tk
 from typing import Final, Optional, Sequence, Tuple
 
-from _tkinter import DONT_WAIT
 from numpy import uint8, zeros
 from numpy.typing import NDArray
 from overrides import override
-from PIL.Image import fromarray
-from PIL.ImageTk import PhotoImage
 
 from avplayer.aio.run import aio_run
 from avplayer.apps.base.async_av_app import AsyncAvApp
@@ -62,7 +58,6 @@ class AsyncAvTk(AsyncAvApp):
     _callback: Optional[AsyncAvTckInterface]  # type: ignore[assignment]
     _exception: Optional[BaseException]
     _latest_size: Tuple[int, int]
-    _photo: PhotoImage
     _image_queue: Queue[NDArray]
 
     def __init__(
@@ -70,7 +65,16 @@ class AsyncAvTk(AsyncAvApp):
         config: AvConfig,
         callback: Optional[AsyncAvTckInterface] = None,
     ):
+        from tkinter import NW, Canvas, Event, Tk
+
+        from PIL.Image import fromarray
+        from PIL.ImageTk import PhotoImage
+
         super().__init__(config, callback)
+        self.NW = NW
+        self.TkEvent = Event
+        self.fromarray = fromarray
+        self.PhotoImage = PhotoImage
 
         self._tk = Tk()
         self._tk.title(config.win_title)
@@ -81,10 +85,13 @@ class AsyncAvTk(AsyncAvApp):
         self._update_interval = 1.0 / config.win_fps
 
         width, height = config.tk_geometry[0:2]
+        self._empty = zeros((height, width, 3), dtype=uint8)
+        self._photo = self.PhotoImage(self._empty)
+
         self._latest_size = width, height
         self._canvas = Canvas(self._tk, width=width, height=height, bg="white")
         self._canvas.pack(fill="both", expand=True)
-        self.update_canvas(zeros((height, width, 3), dtype=uint8))
+        self.update_canvas(self._empty)
 
         self._tk.bind("<Configure>", self._configure)
 
@@ -123,7 +130,7 @@ class AsyncAvTk(AsyncAvApp):
         self._image_queue = Queue(maxsize=config.win_queue_size)
 
     @property
-    def tk(self) -> Tk:
+    def tk(self):
         return self._tk
 
     @property
@@ -161,11 +168,11 @@ class AsyncAvTk(AsyncAvApp):
 
     def update_canvas(self, image: NDArray) -> None:
         try:
-            pil_image = fromarray(image, self.array_mode(image))
+            pil_image = self.fromarray(image, self.array_mode(image))
             if self.size != pil_image.size:
                 pil_image = pil_image.resize(self.size)
-            self._photo = PhotoImage(image=pil_image)
-            self._canvas.create_image(0, 0, image=self._photo, anchor=NW)
+            self._photo = self.PhotoImage(image=pil_image)
+            self._canvas.create_image(0, 0, image=self._photo, anchor="nw")
         except BaseException as e:
             self._exception = e
 
@@ -182,83 +189,90 @@ class AsyncAvTk(AsyncAvApp):
     def call_event(coro) -> None:
         run_coroutine_threadsafe(coro, get_running_loop())
 
-    def _configure(self, event: Event) -> None:
+    def _configure(self, event) -> None:
+        assert isinstance(event, self.TkEvent)
         if self._latest_size != (event.width, event.height):
             self._latest_size = event.width, event.height
             if self._callback:
                 self.call_event(self._callback.on_resize(event.width, event.height))
 
-    def _mouse_enter(self, event: Event) -> None:
-        pass
+    def _mouse_enter(self, event) -> None:
+        assert isinstance(event, self.TkEvent)
 
-    def _mouse_leave(self, event: Event) -> None:
-        pass
+    def _mouse_leave(self, event) -> None:
+        assert isinstance(event, self.TkEvent)
 
-    def _mouse_move(self, event: Event) -> None:
-        pass
+    def _mouse_move(self, event) -> None:
+        assert isinstance(event, self.TkEvent)
 
-    def _focus_in(self, event: Event) -> None:
-        pass
+    def _focus_in(self, event) -> None:
+        assert isinstance(event, self.TkEvent)
 
-    def _focus_out(self, event: Event) -> None:
-        pass
+    def _focus_out(self, event) -> None:
+        assert isinstance(event, self.TkEvent)
 
-    def _lbutton_double(self, event: Event) -> None:
-        pass
+    def _lbutton_double(self, event) -> None:
+        assert isinstance(event, self.TkEvent)
 
-    def _mbutton_double(self, event: Event) -> None:
-        pass
+    def _mbutton_double(self, event) -> None:
+        assert isinstance(event, self.TkEvent)
 
-    def _rbutton_double(self, event: Event) -> None:
-        pass
+    def _rbutton_double(self, event) -> None:
+        assert isinstance(event, self.TkEvent)
 
-    def _lbutton_up(self, event: Event) -> None:
-        pass
+    def _lbutton_up(self, event) -> None:
+        assert isinstance(event, self.TkEvent)
 
-    def _mbutton_up(self, event: Event) -> None:
-        pass
+    def _mbutton_up(self, event) -> None:
+        assert isinstance(event, self.TkEvent)
 
-    def _rbutton_up(self, event: Event) -> None:
-        pass
+    def _rbutton_up(self, event) -> None:
+        assert isinstance(event, self.TkEvent)
 
-    def _lbutton_move(self, event: Event) -> None:
-        pass
+    def _lbutton_move(self, event) -> None:
+        assert isinstance(event, self.TkEvent)
 
-    def _mbutton_move(self, event: Event) -> None:
-        pass
+    def _mbutton_move(self, event) -> None:
+        assert isinstance(event, self.TkEvent)
 
-    def _rbutton_move(self, event: Event) -> None:
-        pass
+    def _rbutton_move(self, event) -> None:
+        assert isinstance(event, self.TkEvent)
 
-    def _lbutton_down(self, event: Event) -> None:
-        pass
+    def _lbutton_down(self, event) -> None:
+        assert isinstance(event, self.TkEvent)
 
-    def _mbutton_down(self, event: Event) -> None:
-        pass
+    def _mbutton_down(self, event) -> None:
+        assert isinstance(event, self.TkEvent)
 
-    def _rbutton_down(self, event: Event) -> None:
-        pass
+    def _rbutton_down(self, event) -> None:
+        assert isinstance(event, self.TkEvent)
 
-    def _wheel_up(self, event: Event) -> None:
-        pass
+    def _wheel_up(self, event) -> None:
+        assert isinstance(event, self.TkEvent)
 
-    def _wheel_down(self, event: Event) -> None:
-        pass
+    def _wheel_down(self, event) -> None:
+        assert isinstance(event, self.TkEvent)
 
-    def _wheel_move(self, event: Event) -> None:
-        pass
+    def _wheel_move(self, event) -> None:
+        assert isinstance(event, self.TkEvent)
 
-    def _key(self, event: Event) -> None:
+    def _key(self, event) -> None:
+        assert isinstance(event, self.TkEvent)
         logger.debug(f"[tk] event <Key> code={event.keycode},sym={event.keysym}")
         if self._callback:
             self.call_event(self._callback.on_key(event.keysym))
 
-    def _special_key(self, bind: str, event: Event) -> None:
+    def _special_key(self, bind: str, event) -> None:
+        assert isinstance(event, self.TkEvent)
         logger.debug(f"[tk] event {bind} code={event.keycode},sym={event.keysym}")
         if self._callback:
             self.call_event(self._callback.on_key(event.keysym))
 
     async def _run_tk_with_avio(self) -> None:
+        from tkinter import TclError
+
+        from _tkinter import DONT_WAIT
+
         avtask = create_task(self._run_avio(), name="avtask")
 
         try:

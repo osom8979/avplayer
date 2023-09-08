@@ -31,6 +31,7 @@ fflags
 ffplay
 fmpeg
 fprobe
+fromarray
 goturn
 hdcp
 hwheel
