@@ -58,9 +58,6 @@ VERBOSE_LEVEL_0: Final[int] = 0
 VERBOSE_LEVEL_1: Final[int] = 1
 VERBOSE_LEVEL_2: Final[int] = 2
 
-DEFAULT_HTTP_BIND: Final[str] = "localhost"
-DEFAULT_HTTP_PORT: Final[int] = 8080
-DEFAULT_HTTP_TIMEOUT: Final[float] = 8.0
 DEFAULT_LOGGING_STEP: Final[int] = 1000
 
 DEFAULT_WIN_GEOMETRY: Final[str] = "640x360+0+0"

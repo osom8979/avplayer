@@ -10,9 +10,6 @@ from avplayer.variables import (
     DEFAULT_APP,
     DEFAULT_AV_OPEN_TIMEOUT,
     DEFAULT_AV_READ_TIMEOUT,
-    DEFAULT_HTTP_BIND,
-    DEFAULT_HTTP_PORT,
-    DEFAULT_HTTP_TIMEOUT,
     DEFAULT_IO_BUFFER_SIZE,
     DEFAULT_LOGGING_STEP,
     DEFAULT_WIN_FPS,
@@ -124,29 +121,6 @@ def default_argument_parser() -> ArgumentParser:
         "-V",
         action="version",
         version=version(),
-    )
-
-    parser.add_argument(
-        "--bind",
-        "-b",
-        default=DEFAULT_HTTP_BIND,
-        metavar="bind",
-        help=f"Bind address (default: '{DEFAULT_HTTP_BIND}')",
-    )
-    parser.add_argument(
-        "--port",
-        "-p",
-        type=int,
-        default=DEFAULT_HTTP_PORT,
-        metavar="port",
-        help=f"Port number (default: '{DEFAULT_HTTP_PORT}')",
-    )
-    parser.add_argument(
-        "--timeout",
-        "-t",
-        default=DEFAULT_HTTP_TIMEOUT,
-        type=float,
-        help=f"Request timeout in seconds (default: {DEFAULT_HTTP_TIMEOUT})",
     )
 
     parser.add_argument(

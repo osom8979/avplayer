@@ -12,9 +12,6 @@ from avplayer.variables import (
     AIOTK_APP,
     DEFAULT_AV_OPEN_TIMEOUT,
     DEFAULT_AV_READ_TIMEOUT,
-    DEFAULT_HTTP_BIND,
-    DEFAULT_HTTP_PORT,
-    DEFAULT_HTTP_TIMEOUT,
     DEFAULT_IO_BUFFER_SIZE,
     DEFAULT_LOGGING_STEP,
     DEFAULT_WIN_FPS,
@@ -40,9 +37,6 @@ class AvConfig:
         output_file: Optional[str] = None,
         input_size: Optional[Tuple[int, int]] = None,
         output_size: Optional[Tuple[int, int]] = None,
-        bind=DEFAULT_HTTP_BIND,
-        port=DEFAULT_HTTP_PORT,
-        timeout=DEFAULT_HTTP_TIMEOUT,
         timeout_open=DEFAULT_AV_OPEN_TIMEOUT,
         timeout_read=DEFAULT_AV_READ_TIMEOUT,
         buffer_size=DEFAULT_IO_BUFFER_SIZE,
@@ -65,9 +59,6 @@ class AvConfig:
         self._output_file = output_file if output_file else str()
         self._input_size = input_size
         self._output_size = output_size
-        self._bind = bind
-        self._port = port
-        self._timeout = timeout
         self._timeout_open = timeout_open
         self._timeout_read = timeout_read
         self._buffer_size = buffer_size
@@ -114,9 +105,6 @@ class AvConfig:
         assert isinstance(args.app_type, str)
         assert isinstance(args.ffmpeg_path, str)
         assert isinstance(args.logging_step, int)
-        assert isinstance(args.bind, str)
-        assert isinstance(args.port, int)
-        assert isinstance(args.timeout, float)
         assert isinstance(args.output, str)
         assert isinstance(args.input, str)
         assert isinstance(args.input_size, (type(None), str))
@@ -136,9 +124,6 @@ class AvConfig:
         app_type = cls.get_app_type(args.app_type)
         ffmpeg_path = args.ffmpeg_path
         logging_step = args.logging_step
-        bind = args.bind
-        port = args.port
-        timeout = args.timeout
         output_file = args.output
         input_file = args.input
         input_size = cls.size_parse(args.input_size)
@@ -160,9 +145,6 @@ class AvConfig:
             output_file=output_file,
             input_size=input_size,
             output_size=output_size,
-            bind=bind,
-            port=port,
-            timeout=timeout,
             timeout_open=timeout_open,
             timeout_read=timeout_read,
             buffer_size=buffer_size,
@@ -208,18 +190,6 @@ class AvConfig:
     @property
     def logging_step(self) -> int:
         return self._logging_step
-
-    @property
-    def bind(self) -> str:
-        return self._bind
-
-    @property
-    def port(self) -> int:
-        return self._port
-
-    @property
-    def timeout(self) -> float:
-        return self._timeout
 
     @property
     def timeout_open(self) -> float:
@@ -283,9 +253,6 @@ class AvConfig:
             f"Output file: '{self._output_file}'",
             f"Input size: {self._input_size}",
             f"Output size: {self._output_size}",
-            f"Web bind: '{self._bind}'",
-            f"Web port number: {self._port}",
-            f"Web timeout: {self._timeout:.3f}s",
             f"AV IO open timeout: {self._timeout_open:.3f}s",
             f"AV IO read timeout: {self._timeout_read:.3f}s",
             f"Buffer size: {self._buffer_size} bytes",
