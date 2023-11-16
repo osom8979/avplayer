@@ -17,7 +17,7 @@ python -m avplayer --help
 ### [opencv-python](https://pypi.org/project/opencv-python/) compatibility
 
 To prevent freeze when using opencv-python's imshow,
-do not use 'import av' at file-scope.
+do not use `import av` at file-scope.
 
 Please refer to the following link:
 * [AV import leads to OpenCV imshow freeze · Issue #21952 · opencv/opencv](https://github.com/opencv/opencv/issues/21952)
