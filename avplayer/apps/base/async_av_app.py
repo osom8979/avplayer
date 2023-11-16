@@ -5,7 +5,6 @@ from asyncio.exceptions import CancelledError
 from concurrent.futures.thread import ThreadPoolExecutor
 from datetime import datetime
 from functools import partial
-from io import StringIO
 from typing import Optional
 
 from numpy import uint8
@@ -39,7 +38,7 @@ class AsyncAvApp(AvApp):
         step = self.config.logging_step
         verbose = self.config.verbose
         self._enqueue_step = AvgStat("Enqueue", logger, step, verbose, VL2)
-        self._user_step = AvgStat("User", logger, step, verbose, VL2)
+        self._callback_step = AvgStat("Callback", logger, step, verbose, VL2)
         self._grab_stat = AvgStat("Grab", logger, step, verbose, VL2)
 
     async def _after(self, image: NDArray[uint8], begin: datetime) -> None:
@@ -52,7 +51,7 @@ class AsyncAvApp(AvApp):
             self._enqueue_step.do_enter(begin)
             self._enqueue_step.do_exit()
 
-            with self._user_step:
+            with self._callback_step:
                 try:
                     if self._callback:
                         # [IMPORTANT] --------------------------------------#
@@ -93,14 +92,9 @@ class AsyncAvApp(AvApp):
 
         slow_consumption = remain >= self._pubsub_threshold
         if slow_consumption:
-            drop_frame = self.config.drop_slow_frame
             if self.config.verbose >= VL1:
-                buffer = StringIO()
-                buffer.write("Frame consumption is slow.")
-                buffer.write(f" The number of frames remaining is {remain}.")
-                buffer.write(" This frame will be dropped." if drop_frame else "")
-                logger.warning(buffer.getvalue())
-            if drop_frame:
+                logger.warning(f"Frame consumption is slow. remain frame is {remain}")
+            if self.config.drop_slow_frame:
                 return
 
         run_coroutine_threadsafe(self._after(image, datetime.now()), loop)
