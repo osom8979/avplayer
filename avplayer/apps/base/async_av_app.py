@@ -27,19 +27,23 @@ class AsyncAvApp(AvApp):
     def __init__(self, config: AvConfig, callback: Optional[AsyncAvInterface] = None):
         super().__init__(config, None)
         self._callback = callback
-
         self._pub = 0
         self._sub = 0
-        self._pubsub_threshold = 10
-        self._frame_drop = False
-        # If the consumption rate is slower than the production rate,
-        # frames are dropped.
 
         step = self.config.logging_step
         verbose = self.config.verbose
         self._enqueue_step = AvgStat("Enqueue", logger, step, verbose, VL2)
         self._callback_step = AvgStat("Callback", logger, step, verbose, VL2)
         self._grab_stat = AvgStat("Grab", logger, step, verbose, VL2)
+
+    @property
+    def remain_frames(self) -> int:
+        assert self._pub >= self._sub
+        return self._pub - self._sub
+
+    @property
+    def is_slow_consumption(self) -> bool:
+        return self.remain_frames >= self.config.drop_threshold
 
     async def _after(self, image: NDArray[uint8], begin: datetime) -> None:
         """
@@ -87,13 +91,11 @@ class AsyncAvApp(AvApp):
     def _enqueue_on_image_coroutine(
         self, loop: AbstractEventLoop, image: NDArray[uint8]
     ) -> None:
-        assert self._pub >= self._sub
-        remain = self._pub - self._sub
-
-        slow_consumption = remain >= self._pubsub_threshold
-        if slow_consumption:
+        if self.is_slow_consumption:
             if self.config.verbose >= VL1:
-                logger.warning(f"Frame consumption is slow. remain frame is {remain}")
+                logger.warning(
+                    f"Frame consumption is slow. remain frame is {self.remain_frames}"
+                )
             if self.config.drop_slow_frame:
                 return
 

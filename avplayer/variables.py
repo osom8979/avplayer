@@ -41,6 +41,12 @@ DEFAULT_IO_BUFFER_SIZE: Final[int] = BUFFER_SIZE_4K
 Honored only when file is a file-like object.
 """
 
+DEFAULT_DROP_THRESHOLD: Final[int] = 3
+"""Threshold for the number of buffering to drop waiting frames.
+If the consumption rate is slower than the production rate, frames are dropped.
+The smaller this value, the closer it is to live video.
+"""
+
 DEFAULT_AV_OPEN_TIMEOUT: Final[float] = 32.0
 DEFAULT_AV_READ_TIMEOUT: Final[float] = 16.0
 
