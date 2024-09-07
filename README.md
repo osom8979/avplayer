@@ -6,6 +6,20 @@
 
 PyAV Media Player
 
+## Installation
+
+Install `avplayer`:
+
+```shell
+pip install avplayer
+```
+
+If you want to use the [tk](https://docs.python.org/3/library/tkinter.html) preview:
+
+```shell
+pip install avplayer[Pillow]
+```
+
 ## Commandline Tools
 
 ```shell
