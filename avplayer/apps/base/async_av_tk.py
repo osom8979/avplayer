@@ -22,6 +22,8 @@ from avplayer.apps.base.async_av_app import AsyncAvApp
 from avplayer.apps.interface.av_interface import AsyncAvTckInterface
 from avplayer.avconfig import AvConfig
 from avplayer.logging.logging import logger
+from avplayer.variables import VERBOSE_LEVEL_1 as VL1
+from avplayer.variables import VERBOSE_LEVEL_2 as VL2
 
 KEY_RETURN: Final[str] = "<Return>"
 KEY_BACKSPACE: Final[str] = "<BackSpace>"
@@ -283,7 +285,7 @@ class AsyncAvTk(AsyncAvApp):
                 try:
                     frame = self._image_queue.get_nowait()
                 except QueueEmpty:
-                    if self.config.verbose >= 2:
+                    if self.config.verbose >= VL2:
                         logger.debug(
                             "The image queue is empty. Skip the current frame."
                         )
@@ -342,7 +344,8 @@ class AsyncAvTk(AsyncAvApp):
                     image = image[:, :, ::-1]
                 self._image_queue.put_nowait(image)
             except QueueFull:
-                logger.warning("The image queue is full. Drop the current frame")
+                if self.config.verbose >= VL1:
+                    logger.warning("The image queue is full. Drop the current frame")
 
     @override
     def start(self) -> None:
