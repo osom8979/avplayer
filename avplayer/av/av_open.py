@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# mypy: disable-error-code="call-overload, misc"
 
 from avplayer.av.av_options import CommonAvOptions
 from avplayer.logging.logging import logger

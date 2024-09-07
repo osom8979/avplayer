@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# mypy: disable-error-code="attr-defined, union-attr"
 
 from errno import EAGAIN
 from threading import Event
@@ -317,9 +318,9 @@ class AvIo:
         assert isinstance(frame, self.VideoFrame)
         if self._source_size is not None:
             width, height = self._source_size
-            return frame.reformat(width, height, "bgr24").to_ndarray()
+            return frame.reformat(width, height, "bgr24").to_ndarray()  # type: ignore[return-value]  # noqa: E501
         else:
-            return frame.to_ndarray(format="bgr24")
+            return frame.to_ndarray(format="bgr24")  # type: ignore[return-value]
 
     def iter(self, coro) -> None:
         frame = next(self.recv())

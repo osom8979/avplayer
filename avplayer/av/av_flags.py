@@ -116,7 +116,7 @@ def set_stream_flags(
 ) -> None:
     from av.audio.stream import AudioStream
     from av.stream import Stream
-    from av.video import VideoStream
+    from av.video import VideoStream  # type: ignore[attr-defined]
 
     assert isinstance(stream, Stream)
     assert isinstance(stream, VideoStream) or isinstance(stream, AudioStream)

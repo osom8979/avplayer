@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# mypy: disable-error-code="call-overload, operator"
 
 from typing import NamedTuple, Optional, Tuple, Union
 
@@ -22,7 +23,7 @@ def get_av_probe(
     assert isinstance(input_container, InputContainer)
 
     duration = input_container.duration / time_base
-    width = input_container.width
-    height = input_container.height
+    width = input_container.width  # type: ignore[attr-defined]
+    height = input_container.height  # type: ignore[attr-defined]
 
     return AvProbe(width=width, height=height, duration=duration)
