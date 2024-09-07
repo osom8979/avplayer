@@ -86,7 +86,7 @@ class AsyncAvTk(AsyncAvApp):
 
         width, height = config.tk_geometry[0:2]
         self._empty = zeros((height, width, 3), dtype=uint8)
-        self._photo = self.PhotoImage(self._empty)
+        self._photo = self.PhotoImage(image=self.fromarray(self._empty))
 
         self._latest_size = width, height
         self._canvas = Canvas(self._tk, width=width, height=height, bg="white")
