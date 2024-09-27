@@ -37,6 +37,12 @@ Please refer to the following link:
 * [AV import leads to OpenCV imshow freeze · Issue #21952 · opencv/opencv](https://github.com/opencv/opencv/issues/21952)
 * [python - Can't show image with opencv when importing av - Stack Overflow](https://stackoverflow.com/questions/72604912/cant-show-image-with-opencv-when-importing-av)
 
+## Examples
+
+### OpenCV - highgui
+
+See the [examples/cv2_example.py](./examples/cv2_example.py) file.
+
 ## License
 
 See the [LICENSE](./LICENSE) file for details. In summary,

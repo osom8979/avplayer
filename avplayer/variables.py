@@ -71,8 +71,11 @@ DEFAULT_WIN_TITLE: Final[str] = "AvPlayer"
 DEFAULT_WIN_FPS: Final[int] = 60
 DEFAULT_WIN_QUEUE_SIZE: Final[int] = 128
 
+DEFAULT_CV_EXIT_KEYS: Final[Sequence[str]] = "Q", "q"
+
 IO_APP: Final[str] = "io"
 AIO_APP: Final[str] = "aio"
 AIOTK_APP: Final[str] = "aiotk"
+CV_APP: Final[str] = "aiotk"
 DEFAULT_APP: Final[str] = IO_APP
-APP_TYPES: Final[Sequence[str]] = IO_APP, AIO_APP, AIOTK_APP
+APP_TYPES: Final[Sequence[str]] = IO_APP, AIO_APP, AIOTK_APP, CV_APP

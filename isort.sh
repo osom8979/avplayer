@@ -69,5 +69,7 @@ print_message "isort ${ARGS[*]}"
 
 "$ROOT_DIR/python" -m isort "${ARGS[@]}" \
     "$ROOT_DIR/avplayer/" \
+    "$ROOT_DIR/examples/" \
     "$ROOT_DIR/tester/" \
+    "$ROOT_DIR/main.py" \
     "$ROOT_DIR/setup.py"

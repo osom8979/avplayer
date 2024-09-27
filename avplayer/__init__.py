@@ -1,12 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from avplayer.apps.default import AioApp, AsyncAvTk, IoApp
-from avplayer.apps.default import default_main as av_main
-from avplayer.apps.interface.av_interface import (
-    AsyncAvInterface,
-    AsyncAvTckInterface,
-    AvInterface,
-)
+from avplayer.apps import av_main
+from avplayer.apps.defaults import AioApp, AioCv, AioTk, IoApp
 from avplayer.av.av_io import AvIo
 from avplayer.avconfig import AvConfig
 
@@ -14,11 +9,9 @@ __version__ = "1.8.2"
 __all__ = [
     "__version__",
     "AioApp",
-    "AsyncAvInterface",
-    "AsyncAvTckInterface",
-    "AsyncAvTk",
+    "AioCv",
+    "AioTk",
     "AvConfig",
-    "AvInterface",
     "AvIo",
     "IoApp",
     "av_main",

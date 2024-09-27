@@ -28,5 +28,7 @@ print_message "flake8 ${ARGS[*]}"
 
 "$ROOT_DIR/python" -m flake8 "${ARGS[@]}" \
     "$ROOT_DIR/avplayer/" \
+    "$ROOT_DIR/examples/" \
     "$ROOT_DIR/tester/" \
+    "$ROOT_DIR/main.py" \
     "$ROOT_DIR/setup.py"

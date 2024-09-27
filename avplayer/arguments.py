@@ -10,6 +10,7 @@ from avplayer.variables import (
     DEFAULT_APP,
     DEFAULT_AV_OPEN_TIMEOUT,
     DEFAULT_AV_READ_TIMEOUT,
+    DEFAULT_CV_EXIT_KEYS,
     DEFAULT_DROP_THRESHOLD,
     DEFAULT_IO_BUFFER_SIZE,
     DEFAULT_LOGGING_STEP,
@@ -185,7 +186,7 @@ def default_argument_parser() -> ArgumentParser:
         "--win-title",
         default=DEFAULT_WIN_TITLE,
         metavar="title",
-        help=f"Tk window title (default: '{DEFAULT_WIN_TITLE}')",
+        help=f"Tk/Cv window title (default: '{DEFAULT_WIN_TITLE}')",
     )
     parser.add_argument(
         "--win-fps",
@@ -200,6 +201,32 @@ def default_argument_parser() -> ArgumentParser:
         default=DEFAULT_WIN_QUEUE_SIZE,
         metavar="size",
         help=f"Image queue size (default: {DEFAULT_WIN_QUEUE_SIZE})",
+    )
+
+    parser.add_argument(
+        "--cv-flags",
+        type=int,
+        metavar="flags",
+        help="Cv window flags (default: cv2.WINDOW_NORMAL)",
+    )
+    parser.add_argument(
+        "--cv-exit-keys",
+        action="extend",
+        nargs="+",
+        type=str,
+        help=f"Cv exit codes (default: {DEFAULT_CV_EXIT_KEYS})",
+    )
+    parser.add_argument(
+        "--cv-infinity",
+        action="store_true",
+        default=False,
+        help="Enable infinite restart mode",
+    )
+    parser.add_argument(
+        "--cv-headless",
+        action="store_true",
+        default=False,
+        help="Hide cv2's highgui window",
     )
 
     parser.add_argument(

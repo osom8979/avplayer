@@ -4,14 +4,16 @@ from argparse import Namespace
 from copy import deepcopy
 from enum import Enum, auto, unique
 from re import split as re_split
-from typing import List, Optional, Tuple
+from typing import List, Optional, Sequence, Tuple
 
 from avplayer.logging.logging import logger
 from avplayer.variables import (
     AIO_APP,
     AIOTK_APP,
+    CV_APP,
     DEFAULT_AV_OPEN_TIMEOUT,
     DEFAULT_AV_READ_TIMEOUT,
+    DEFAULT_CV_EXIT_KEYS,
     DEFAULT_DROP_THRESHOLD,
     DEFAULT_IO_BUFFER_SIZE,
     DEFAULT_LOGGING_STEP,
@@ -29,6 +31,7 @@ class AvAppType(Enum):
     IO = auto()
     AIO = auto()
     AIOTK = auto()
+    CV = auto()
 
 
 class AvConfig:
@@ -52,32 +55,40 @@ class AvConfig:
         win_title=DEFAULT_WIN_TITLE,
         win_fps=DEFAULT_WIN_FPS,
         win_queue_size=DEFAULT_WIN_QUEUE_SIZE,
+        cv_flags: Optional[int] = None,
+        cv_exit_keys: Optional[Sequence[str]] = DEFAULT_CV_EXIT_KEYS,
+        cv_infinity=False,
+        cv_headless=False,
         debug=False,
         verbose=0,
         *,
         args: Optional[Namespace] = None,
     ):
-        self._input_file = input_file
-        self._output_file = output_file if output_file else str()
-        self._input_size = input_size
-        self._output_size = output_size
-        self._timeout_open = timeout_open
-        self._timeout_read = timeout_read
-        self._buffer_size = buffer_size
-        self._drop_slow_frame = drop_slow_frame
-        self._drop_threshold = drop_threshold
-        self._ffmpeg_path = ffmpeg_path
+        self.input_file = input_file
+        self.output_file = output_file if output_file else str()
+        self.input_size = input_size
+        self.output_size = output_size
+        self.timeout_open = timeout_open
+        self.timeout_read = timeout_read
+        self.buffer_size = buffer_size
+        self.drop_slow_frame = drop_slow_frame
+        self.drop_threshold = drop_threshold
+        self.ffmpeg_path = ffmpeg_path
+        self.logging_step = logging_step
+        self.use_uvloop = use_uvloop
+        self.app_type = app_type
+        self.win_geometry = win_geometry
+        self.win_title = win_title
+        self.win_fps = win_fps
+        self.win_queue_size = win_queue_size
+        self.cv_flags = cv_flags
+        self.cv_exit_keys = cv_exit_keys
+        self.cv_infinity = cv_infinity
+        self.cv_headless = cv_headless
+        self.debug = debug
+        self.verbose = verbose
+        self.args = deepcopy(args) if args is not None else Namespace()
         self._printer = printer
-        self._logging_step = logging_step
-        self._use_uvloop = use_uvloop
-        self._app_type = app_type
-        self._win_geometry = win_geometry
-        self._win_title = win_title
-        self._win_fps = win_fps
-        self._win_queue_size = win_queue_size
-        self._debug = debug
-        self._verbose = verbose
-        self._args = deepcopy(args) if args is not None else Namespace()
 
     @staticmethod
     def size_parse(text: Optional[str], separator="x") -> Optional[Tuple[int, int]]:
@@ -97,6 +108,8 @@ class AvConfig:
             return AvAppType.AIO
         elif choice == AIOTK_APP:
             return AvAppType.AIOTK
+        elif choice == CV_APP:
+            return AvAppType.CV
         else:
             raise NotImplementedError
 
@@ -121,6 +134,10 @@ class AvConfig:
         assert isinstance(args.win_title, str)
         assert isinstance(args.win_fps, int)
         assert isinstance(args.win_queue_size, int)
+        assert isinstance(args.cv_flags, (type(None), int))
+        assert isinstance(args.cv_exit_keys, list)
+        assert isinstance(args.cv_infinity, bool)
+        assert isinstance(args.cv_headless, bool)
 
         debug = args.debug
         verbose = args.verbose
@@ -140,6 +157,10 @@ class AvConfig:
         win_title = args.win_title
         win_fps = args.win_fps
         win_queue_size = args.win_queue_size
+        cv_flags = args.cv_flags
+        cv_exit_keys = args.cv_exit_keys
+        cv_infinity = args.cv_infinity
+        cv_headless = args.cv_headless
 
         assert hasattr(args, PRINTER_NAMESPACE_ATTR_KEY)
         printer = getattr(args, PRINTER_NAMESPACE_ATTR_KEY)
@@ -162,117 +183,61 @@ class AvConfig:
             win_title=win_title,
             win_fps=win_fps,
             win_queue_size=win_queue_size,
+            cv_flags=cv_flags,
+            cv_exit_keys=cv_exit_keys,
+            cv_infinity=cv_infinity,
+            cv_headless=cv_headless,
             debug=debug,
             verbose=verbose,
             args=args,
         )
 
     @property
-    def args(self) -> Namespace:
-        return self._args
-
-    @property
-    def debug(self) -> bool:
-        return self._debug
-
-    @property
-    def verbose(self) -> int:
-        return self._verbose
-
-    @property
-    def use_uvloop(self) -> bool:
-        return self._use_uvloop
-
-    @property
-    def app_type(self) -> AvAppType:
-        return self._app_type
-
-    @property
-    def ffmpeg_path(self) -> str:
-        return self._ffmpeg_path
-
-    @property
-    def logging_step(self) -> int:
-        return self._logging_step
-
-    @property
-    def timeout_open(self) -> float:
-        return self._timeout_open
-
-    @property
-    def timeout_read(self) -> float:
-        return self._timeout_read
-
-    @property
-    def buffer_size(self) -> int:
-        return self._buffer_size
-
-    @property
-    def drop_slow_frame(self) -> bool:
-        return self._drop_slow_frame
-
-    @property
-    def drop_threshold(self) -> int:
-        return self._drop_threshold
-
-    @property
     def output(self) -> str:
-        return self._output_file
+        return self.output_file
 
     @property
     def input(self) -> str:
-        return self._input_file
-
-    @property
-    def input_size(self) -> Optional[Tuple[int, int]]:
-        return self._input_size
-
-    @property
-    def output_size(self) -> Optional[Tuple[int, int]]:
-        return self._output_size
-
-    @property
-    def win_geometry(self) -> str:
-        return self._win_geometry
+        return self.input_file
 
     @property
     def tk_geometry(self) -> Tuple[int, int, int, int]:
-        w, h, x, y = re_split(r"x|\+", self._win_geometry)
+        w, h, x, y = re_split(r"[x+]", self.win_geometry)
         return int(w), int(h), int(x), int(y)
 
     @property
-    def win_title(self) -> str:
-        return self._win_title
-
-    @property
-    def win_fps(self) -> int:
-        return self._win_fps
-
-    @property
-    def win_queue_size(self) -> int:
-        return self._win_queue_size
+    def cv_exit_codes(self) -> Sequence[int]:
+        if self.cv_exit_keys:
+            keys = self.cv_exit_keys
+        else:
+            keys = DEFAULT_CV_EXIT_KEYS
+        return tuple(ord(k) for k in keys)
 
     def print(self, *args, **kwargs) -> None:
         self._printer(*args, **kwargs)
 
     def as_logging_lines(self) -> List[str]:
         return [
-            f"Input file: '{self._input_file}'",
-            f"Output file: '{self._output_file}'",
-            f"Input size: {self._input_size}",
-            f"Output size: {self._output_size}",
-            f"AV IO open timeout: {self._timeout_open:.3f}s",
-            f"AV IO read timeout: {self._timeout_read:.3f}s",
-            f"Buffer size: {self._buffer_size} bytes",
-            f"FFmpeg path: '{self._ffmpeg_path}'",
-            f"Logging step: {self._logging_step}",
-            f"Use uvloop: {self._use_uvloop}",
-            f"App type: '{self._app_type.name}'",
-            f"Win geometry: '{self._win_geometry}'",
-            f"Win title: '{self._win_title}'",
-            f"Win fps: {self._win_fps:.2f}",
-            f"Debug: {self._debug}",
-            f"Verbose: {self._verbose}",
+            f"Input file: '{self.input_file}'",
+            f"Output file: '{self.output_file}'",
+            f"Input size: {self.input_size}",
+            f"Output size: {self.output_size}",
+            f"AV IO open timeout: {self.timeout_open:.3f}s",
+            f"AV IO read timeout: {self.timeout_read:.3f}s",
+            f"Buffer size: {self.buffer_size} bytes",
+            f"FFmpeg path: '{self.ffmpeg_path}'",
+            f"Logging step: {self.logging_step}",
+            f"Use uvloop: {self.use_uvloop}",
+            f"App type: '{self.app_type.name}'",
+            f"Win geometry: '{self.win_geometry}'",
+            f"Win title: '{self.win_title}'",
+            f"Win fps: {self.win_fps:.2f}",
+            f"Cv flags: {self.cv_flags}",
+            f"Cv exit codes: {self.cv_exit_keys}",
+            f"Cv infinity: {self.cv_infinity}",
+            f"Cv headless: {self.cv_headless}",
+            f"Debug: {self.debug}",
+            f"Verbose: {self.verbose}",
         ]
 
     def logging_params(self) -> None:
