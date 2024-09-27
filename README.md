@@ -26,6 +26,27 @@ pip install avplayer[Pillow]
 python -m avplayer --help
 ```
 
+## Realtime support
+
+If it is important to get the latest frame in real-time streaming
+such as RTSP streaming, we recommend adjusting the `--drop-*` related options.
+
+```bash
+python -m avplayer --drop-slow-frame --drop-threshold=1 ...
+```
+
+The `cvplayer.avconfig.AvConfig` class can be used as follows:
+
+```python
+from avplayer.avconfig import AvConfig
+
+config = AvConfig(
+    input_file="rtsp://...",
+    drop_slow_frame=True,
+    drop_threshold=1,
+)
+```
+
 ## Features
 
 ### [opencv-python](https://pypi.org/project/opencv-python/) compatibility

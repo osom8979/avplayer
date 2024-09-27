@@ -135,7 +135,7 @@ class AvConfig:
         assert isinstance(args.win_fps, int)
         assert isinstance(args.win_queue_size, int)
         assert isinstance(args.cv_flags, (type(None), int))
-        assert isinstance(args.cv_exit_keys, list)
+        assert isinstance(args.cv_exit_keys, (type(None), list))
         assert isinstance(args.cv_infinity, bool)
         assert isinstance(args.cv_headless, bool)
 
