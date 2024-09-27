@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from sys import argv
 from datetime import datetime
+from sys import argv
 
 import cv2
 from numpy import uint8

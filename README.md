@@ -60,11 +60,11 @@ Please refer to the following link:
 
 ## Examples
 
-### AioCv usage
+### AioCv
 
 See the [examples/aio_cv.py](./examples/aio_cv.py) file.
 
-### OpenCV - highgui
+### OpenCV highgui
 
 See the [examples/cv2_example.py](./examples/cv2_example.py) file.
 
